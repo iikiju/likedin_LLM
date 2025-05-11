@@ -1,0 +1,224 @@
+body {
+  width: 350px;
+  max-height: 500px;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.container {
+  padding: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 18px;
+  color: #0077b5;
+}
+
+.header img {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.status-message {
+  color: #666;
+  margin: 16px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.hidden {
+  display: none;
+}
+
+#loading {
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* 결과 섹션 */
+.result-section {
+  margin-bottom: 16px;
+}
+
+.result-section h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.result-section p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #666;
+}
+
+.company-list li:last-child {
+  border-bottom: none;
+}
+
+/* 회사 목록으로 돌아가기 버튼 */
+.back-to-list-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #0077b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-to-list-btn:hover {
+  background-color: #005e93;
+}
+
+/* 회사 정보 분석기 스타일 */
+.linkedin-analyzer-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 4px 8px;
+  color: #fff;
+  background-color: #0077b5;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.linkedin-analyzer-btn:hover {
+  background-color: #005e93;
+}
+
+.linkedin-analyzer-btn svg {
+  margin-right: 4px;
+}
+
+/* 회사 분석 카드 */
+.company-analysis-card {
+  position: absolute;
+  z-index: 9999;
+  width: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 16px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.company-analysis-card h2 {
+  margin: 0 0 16px;
+  padding-right: 24px;
+  font-size: 18px;
+  color: #0077b5;
+}
+
+.analysis-section {
+  margin-bottom: 16px;
+}
+
+.analysis-section h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.analysis-section p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #666;
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+/* 별점 표시 */
+.stars {
+  margin-bottom: 8px;
+}
+
+.star {
+  font-size: 16px;
+  color: #ccc;
+}
+
+.star.active {
+  color: #fbb72c;
+}
+
+/* 로딩 표시 */
+.analysis-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(0, 119, 181, 0.3);
+  border-radius: 50%;
+  border-top-color: #0077b5;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Ollama 연결 확인 버튼 */
+.check-ollama-btn {
+  background-color: #0077b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  align-self: center;
+}
+
+.check-ollama-btn:hover {
+  background-color: #006097;
+}
+
+.check-ollama-btn:active {
+  background-color: #004b7c;
+} 
