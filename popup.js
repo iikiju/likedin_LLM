@@ -62,7 +62,7 @@ function showCompanyList(companies, tabId) {
   
   // 제목 추가
   const titleElement = document.createElement('h3');
-  titleElement.textContent = '분석할 회사 선택';
+  titleElement.textContent = '<Select a company to analyze>';
   titleElement.style.marginBottom = '10px';
   companyInfoElement.appendChild(titleElement);
   
@@ -185,7 +185,7 @@ function showCompanyList(companies, tabId) {
 // Ollama 연결 상태 확인
 async function checkOllamaConnection() {
   try {
-    showStatus('Ollama 연결 확인 중...');
+    showStatus('LLM Connection Checking...');
     document.getElementById('error-container').classList.add('hidden');
     
     // 먼저 간단한 HEAD 요청으로 서버가 실행 중인지 확인
@@ -197,7 +197,7 @@ async function checkOllamaConnection() {
       }
     }).catch(error => {
       console.error('Ping 요청 실패:', error);
-      showError('Ollama 서버 연결 실패: ' + error.message);
+      showError('LLM Server Connection Failed: ' + error.message);
       return null;
     });
     
@@ -340,7 +340,7 @@ function showLoading() {
   document.getElementById('error-container').classList.add('hidden');
   
   const loadingElement = document.getElementById('loading');
-  loadingElement.innerHTML = '<div class="spinner"></div><p>분석 중...</p>';
+  loadingElement.innerHTML = '<div class="spinner"></div><p>Analyzing...</p>';
   loadingElement.classList.remove('hidden');
 }
 
@@ -367,7 +367,7 @@ function showAnalysisResult(data) {
   // "돌아가기" 버튼 추가
   if (!document.querySelector('.back-to-list-btn')) {
     const backBtn = document.createElement('button');
-    backBtn.textContent = '회사 목록으로 돌아가기';
+    backBtn.textContent = 'back to list';
     backBtn.className = 'back-to-list-btn';
     backBtn.style.marginTop = '12px';
     
@@ -381,7 +381,7 @@ function showAnalysisResult(data) {
             if (response && response.companiesInfo) {
               showCompanyList(response.companiesInfo, tabs[0].id);
             } else {
-              showStatus('회사 정보를 찾을 수 없습니다.');
+              showStatus('Company info not found.');
             }
           }
         );

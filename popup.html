@@ -63,11 +63,12 @@
     }
     .tool-buttons {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       margin-bottom: 10px;
+      gap: 2px;
     }
     .tool-button {
-      background-color: #0077b5;
+      background-color: #0076b5;
       color: white;
       border: none;
       border-radius: 4px;
@@ -89,8 +90,8 @@
   <h2>LinkedIn Company Analysis</h2>
   
   <div class="tool-buttons">
-    <button id="check-ollama" class="tool-button">Check Ollama Connection</button>
-    <!-- <button id="use-mock-data" class="tool-button">모의 데이터 사용</button> -->
+    <button id="check-ollama" class="tool-button">LLM-Test</button>
+    <button id="use-mock-data" class="tool-button">Synthetic-Data</button>
   </div>
   
   <div id="error-container" class="error-message hidden"></div>
