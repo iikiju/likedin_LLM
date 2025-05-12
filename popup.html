@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>LinkedIn 회사 분석기</title>
+  <title>LinkedIn Company Analysis</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -86,11 +86,11 @@
   </style>
 </head>
 <body>
-  <h2>LinkedIn 회사 분석기</h2>
+  <h2>LinkedIn Company Analysis</h2>
   
   <div class="tool-buttons">
-    <button id="check-ollama" class="tool-button">Ollama 연결 확인</button>
-    <button id="use-mock-data" class="tool-button">모의 데이터 사용</button>
+    <button id="check-ollama" class="tool-button">Check Ollama Connection</button>
+    <!-- <button id="use-mock-data" class="tool-button">모의 데이터 사용</button> -->
   </div>
   
   <div id="error-container" class="error-message hidden"></div>
@@ -99,7 +99,7 @@
   
   <div id="loading" class="hidden">
     <div class="spinner"></div>
-    <p>분석 중...</p>
+    <p>Analyzing...</p>
   </div>
   
   <div id="analysis-result" class="hidden">
@@ -114,22 +114,22 @@
     </div>
     
     <div class="section">
-      <div class="section-title">연봉 및 보상:</div>
+      <div class="section-title">Salary and Compensation:</div>
       <div id="salary-info"></div>
     </div>
     
     <div class="section">
-      <div class="section-title">복지 혜택:</div>
+      <div class="section-title">Benefits:</div>
       <div id="benefits-info"></div>
     </div>
     
     <div class="section">
-      <div class="section-title">직무 적합도:</div>
+      <div class="section-title">Job Fit:</div>
       <div id="job-fit-info"></div>
     </div>
     
     <div class="section">
-      <div class="section-title">종합 평가:</div>
+      <div class="section-title">Summary:</div>
       <div id="rating-text"></div>
     </div>
   </div>
