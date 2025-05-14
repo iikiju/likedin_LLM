@@ -32,7 +32,7 @@ Chrome 확장 프로그램이 로컬 Ollama API에 접근하기 위해 CORS 설�
 
 #### Mac/Linux 사용자:
 ```bash
-# Ollama 서버를 중지하고, 환경 변수 설정 후 재시작
+# Ollama 서버를 중지하고, 환경 변수 설정 후 재시작 -> 만약 상단탭에 llama그림이 실행중이라면 종료할 것!!!!!!!
 killall ollama
 OLLAMA_ORIGINS="chrome-extension://*,http://localhost:*" ollama serve
 ```
