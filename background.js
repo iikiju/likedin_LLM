@@ -81,7 +81,7 @@ Write an analysis of the job fit and requirements in the content.
 Write an analysis of the company culture and working environment in the content.
 
 [Summary]
-Write a comprehensive analysis of the content in 3 sentences.
+Write a comprehensive analysis of the content in 3 sentences. please start word "To hyeonji"
 
 [Rating]
 Enter a number between 1 and 5.
