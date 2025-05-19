@@ -62,34 +62,35 @@ async function callLLMApi(companyInfo, companyData) {
 
   const jobContent = companyInfo.description || companyInfo.description || JSON.stringify(companyInfo);
 
-  const prompt = `You are a helpful assistant that analyzes job posting. Please follow these steps and only summarize the input contents.:
-
-1. First, translate the following language job posting content to English if it contains other language text.
-
-2. Then, analyze the translated content and provide a comprehensive analysis, following this exact format:
-
+  const prompt = `I'm SuMin, 25 years old woman, live in Seoul, South Korea.
+    I want to work in an IT company full time position.
+    I just graduated from the Department of Industrial Engineering in UNIST.
+    I have a strong interest in data analysis and machine learning, and I have experience with Python.
+    I have a good understanding of statistics and data visualization.
+    I have completed several projects related to data analysis and machine learning during my studies.
+    I am looking for a company that values innovation and creativity, and I want to work in a collaborative environment.
+    I am also interested in companies that offer opportunities for professional development and career growth.
+    I am looking for a company that values work-life balance and offers a positive work environment.
+    I am also want to earn a salary above 50,000,000 KRW per year.
+  
+  The information about the company recommended to me is as follows.
+  please ignore ther 
+  ${companyInfo.name}to ${companyInfo.jobDetails} position.
+  ${jobContent}
+  Compare my basic information and the company information mentioned above to analyze whether the company is a good fit for me  and provide a detailed analysis of the following aspects.
+=============================================================================================================================================
 [Salary and Compensation]
-Write an analysis of the salary and compensation in the content. If it contains information about hourly pay, write it down.
-
+  - 
 [Benefits]
-Write an analysis of the benefits in the content.
-
+  -
 [Job Fit]
-Write an analysis of the job fit and requirements in the content.
-
+  -
 [Company Culture]
-Write an analysis of the company culture and working environment in the content.
-
+  - 
 [Summary]
-Write a comprehensive analysis of the content in 3 sentences. please start word "To hyeonji"
+  - start sentence with "In summary, This company rating is "insert number" out of 5. This company and SuMin are ~"
 
-[Rating]
-Enter a number between 1 and 5.
-
-Here is the job posting content:
-
-${jobContent}
-
+=============================================================================================================================================
 Please provide your analysis in English following the exact format above.`;
 
   try {
@@ -137,7 +138,7 @@ Please provide your analysis in English following the exact format above.`;
         jobFit: '',
         culture: '',
         summary: '',
-        rating: 1 // 기본값
+        rating: '' // 기본값
       };
 
       // 각 섹션 추출
@@ -146,7 +147,6 @@ Please provide your analysis in English following the exact format above.`;
       const jobFitMatch = text.match(/\[Job Fit\]([\s\S]*?)(?=\[|$)/);
       const cultureMatch = text.match(/\[Company Culture\]([\s\S]*?)(?=\[|$)/);
       const summaryMatch = text.match(/\[Summary\]([\s\S]*?)(?=\[|$)/);
-      const ratingMatch = text.match(/\[Rating\]([\s\S]*?)(?=\[|$)/);
 
       if (salaryMatch) sections.salary = salaryMatch[1].trim().replace(/<\/think>/g, '');
       if (benefitsMatch) sections.benefits = benefitsMatch[1].trim().replace(/<\/think>/g, '');
@@ -154,10 +154,14 @@ Please provide your analysis in English following the exact format above.`;
       if (cultureMatch) sections.culture = cultureMatch[1].trim().replace(/<\/think>/g, '');
       if (summaryMatch) sections.summary = summaryMatch[1].trim().replace(/<\/think>/g, '');
 
-      if (ratingMatch) {
-        const rating = parseInt(ratingMatch[1].trim());
-        if (!isNaN(rating) && rating >= 1 && rating <= 5) {
-          sections.rating = rating;
+      // Summary에서 rating 추출
+      if (summaryMatch) {
+        const ratingMatch = summaryMatch[1].match(/rating is (\d+) out of 5/i);
+        if (ratingMatch) {
+          const rating = parseInt(ratingMatch[1]);
+          if (!isNaN(rating) && rating >= 1 && rating <= 5) {
+            sections.rating = rating;
+          }
         }
       }
 
