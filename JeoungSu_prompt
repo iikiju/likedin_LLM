@@ -11,7 +11,6 @@ const prompt = `I'm JeoungSu, a 32-year-old man, living in Busan, South Korea.
     I am open to relocating to Seoul or staying in Busan.
 
   The information about the company recommended to me is as follows.
-  please ignore the 
   ${companyInfo.name} to ${companyInfo.jobDetails} position.
   ${jobContent}
   Compare my basic information and the company information mentioned above to analyze whether the company is a good fit for me and provide a detailed analysis of the following aspects.

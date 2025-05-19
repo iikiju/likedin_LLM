@@ -16,7 +16,6 @@ async function callLLMApi(companyInfo, companyData) {
     I am also want to earn a salary above 50,000,000 KRW per year.
   
   The information about the company recommended to me is as follows.
-  please ignore ther 
   ${companyInfo.name}to ${companyInfo.jobDetails} position.
   ${jobContent}
   Compare my basic information and the company information mentioned above to analyze whether the company is a good fit for me  and provide a detailed analysis of the following aspects.
