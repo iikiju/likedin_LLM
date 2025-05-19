@@ -1,0 +1,36 @@
+// LLM API 호출 (로컬 Ollama 사용)
+async function callLLMApi(companyInfo, companyData) {
+  const apiUrl = 'http://localhost:11434/api/generate';
+
+  const jobContent = companyInfo.description || companyInfo.description || JSON.stringify(companyInfo);
+
+  const prompt = `I'm SuMin, 25 years old woman, live in Seoul, South Korea.
+    I want to work in an IT company full time position.
+    I just graduated from the Department of Industrial Engineering in UNIST.
+    I have a strong interest in data analysis and machine learning, and I have experience with Python.
+    I have a good understanding of statistics and data visualization.
+    I have completed several projects related to data analysis and machine learning during my studies.
+    I am looking for a company that values innovation and creativity, and I want to work in a collaborative environment.
+    I am also interested in companies that offer opportunities for professional development and career growth.
+    I am looking for a company that values work-life balance and offers a positive work environment.
+    I am also want to earn a salary above 50,000,000 KRW per year.
+  
+  The information about the company recommended to me is as follows.
+  please ignore ther 
+  ${companyInfo.name}to ${companyInfo.jobDetails} position.
+  ${jobContent}
+  Compare my basic information and the company information mentioned above to analyze whether the company is a good fit for me  and provide a detailed analysis of the following aspects.
+=============================================================================================================================================
+[Salary and Compensation]
+  - 
+[Benefits]
+  -
+[Job Fit]
+  -
+[Company Culture]
+  - 
+[Summary]
+  - start sentence with "In summary, This company rating is "insert number" out of 5. This company and SuMin are ~"
+
+=============================================================================================================================================
+Please provide your analysis in English following the exact format above.`;

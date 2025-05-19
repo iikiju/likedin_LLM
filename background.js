@@ -62,22 +62,22 @@ async function callLLMApi(companyInfo, companyData) {
 
   const jobContent = companyInfo.description || companyInfo.description || JSON.stringify(companyInfo);
 
-  const prompt = `I'm SuMin, 25 years old woman, live in Seoul, South Korea.
-    I want to work in an IT company full time position.
-    I just graduated from the Department of Industrial Engineering in UNIST.
-    I have a strong interest in data analysis and machine learning, and I have experience with Python.
-    I have a good understanding of statistics and data visualization.
-    I have completed several projects related to data analysis and machine learning during my studies.
-    I am looking for a company that values innovation and creativity, and I want to work in a collaborative environment.
-    I am also interested in companies that offer opportunities for professional development and career growth.
-    I am looking for a company that values work-life balance and offers a positive work environment.
-    I am also want to earn a salary above 50,000,000 KRW per year.
-  
+const prompt = `I'm JeoungSu, a 32-year-old man, living in Busan, South Korea.
+    I am currently a Software Engineer at a fintech company and am considering a job change.
+    I graduated from Pusan National University with a degree in Computer Science.
+    I have 5+ years of experience in backend development, proficient in Java, JavaScript, and SQL.
+    I have led projects, including a payment processing system, and have experience with AWS, Docker, and API development.
+    I am interested in fintech, e-commerce, or gaming industries and want to work as a Senior Software Engineer or Team Lead.
+    I value a dynamic and transparent company culture that encourages collaboration and open communication.
+    I am looking for a company that offers mentorship, technical training, and opportunities for career growth.
+    I prefer a hybrid work model and value work-life balance with flexible hours or generous vacation policies.
+    I am aiming for a salary above 80,000,000 KRW per year.
+    I am open to relocating to Seoul or staying in Busan.
+
   The information about the company recommended to me is as follows.
-  please ignore ther 
-  ${companyInfo.name}to ${companyInfo.jobDetails} position.
+  ${companyInfo.name} to ${companyInfo.jobDetails} position.
   ${jobContent}
-  Compare my basic information and the company information mentioned above to analyze whether the company is a good fit for me  and provide a detailed analysis of the following aspects.
+  Compare my basic information and the company information mentioned above to analyze whether the company is a good fit for me and provide a detailed analysis of the following aspects.
 =============================================================================================================================================
 [Salary and Compensation]
   - 
@@ -88,8 +88,7 @@ async function callLLMApi(companyInfo, companyData) {
 [Company Culture]
   - 
 [Summary]
-  - start sentence with "In summary, This company rating is "insert number" out of 5. This company and SuMin are ~"
-
+  - start sentence with "In summary, This company rating is "insert number" out of 5. This company and JeoungSu are ~"
 =============================================================================================================================================
 Please provide your analysis in English following the exact format above.`;
 
