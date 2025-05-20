@@ -59,43 +59,39 @@ async function searchCompanyInfo(companyName, jobDetails = null) {
 // LLM API 호출 (로컬 Ollama 사용)
 async function callLLMApi(companyInfo, companyData) {
   const apiUrl = 'http://localhost:11434/api/generate';
-
   const jobContent = companyInfo.description || companyInfo.description || JSON.stringify(companyInfo);
 
-const prompt = `**please remember that never the hallucination about the analysis result.
-    I'm JeoungSu, a 32-year-old man, living in Busan, South Korea.
-    I am currently a Software Engineer at a fintech company and am considering a job change.
-    I graduated from Pusan National University with a degree in Computer Science.
-    I have 5+ years of experience in backend development, proficient in Java, JavaScript, and SQL.
-    I have led projects, including a payment processing system, and have experience with AWS, Docker, and API development.
-    I am interested in fintech, e-commerce, or gaming industries and want to work as a Senior Software Engineer or Team Lead.
-    I value a dynamic and transparent company culture that encourages collaboration and open communication.
-    I am looking for a company that offers mentorship, technical training, and opportunities for career growth.
-    I prefer a hybrid work model and value work-life balance with flexible hours or generous vacation policies.
-    I am aiming for a salary above 80,000,000 KRW per year.
-    I am open to relocating to Seoul or staying in Busan.
-
-  The information about the company recommended to me is as follows.
-  ${companyInfo.name} to ${companyInfo.jobDetails} position.
-  ${jobContent}
-  Compare my basic information and the company information mentioned above to analyze whether the company is a good fit for me and provide a detailed analysis of the following aspects.
-=============================================================================================================================================
-[Salary and Compensation]
-  - 
-[Benefits]
-  -
-[Job Fit]
-  -
-[Company Culture]
-  - 
-[Summary]
-  - start sentence with "In summary, This company rating is "insert number" out of 5. This company and JeoungSu are ~"
-=============================================================================================================================================
-Please provide your analysis in English following the exact format above.`;
+  // 현재 선택된 프롬프트 프로필 가져오기
+  const { promptProfile = 'JS' } = await chrome.storage.local.get('promptProfile');
+  console.log(`Using prompt profile: ${promptProfile}`);
+  
+  // JSON 파일에서 프롬프트 로드
+  let promptData;
+  try {
+    const promptFile = promptProfile === 'JS' ? 'JS_prompt.json' : 'SM_prompt.json';
+    const response = await fetch(chrome.runtime.getURL(promptFile));
+    promptData = await response.json();
+    console.log(`Loaded prompt from ${promptFile}`);
+  } catch (error) {
+    console.error('Error loading prompt file:', error);
+    // 오류 발생 시 기본 프롬프트 사용
+    promptData = { 
+      prompt: promptProfile === 'JS' ? 
+        "I'm JeoungSu, analyze this company..." : 
+        "I'm SuMin, analyze this company..." 
+    };
+  }
+  
+  // 파일에서 불러온 프롬프트에 동적 데이터 삽입
+  let prompt = promptData.prompt
+    .replace('COMPANY_NAME', companyInfo.name)
+    .replace('COMPANY_POSITION', companyInfo.jobDetails || '')
+    .replace('JOB_CONTENT', jobContent);
 
   try {
     console.log('Ollama API 호출 시작...');
     console.log('분석할 내용:', jobContent);
+    console.log('사용 중인 페르소나:', promptProfile);
     
     const fetchWithTimeout = (url, options, timeout = 600000) => {
       return Promise.race([

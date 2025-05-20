@@ -3,7 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 도구 버튼 이벤트 리스너 추가
   document.getElementById('check-ollama').addEventListener('click', checkOllamaConnection);
-  document.getElementById('use-mock-data').addEventListener('click', useMockData);
+  document.getElementById('use-js-prompt').addEventListener('click', () => switchPromptProfile('JS'));
+  document.getElementById('use-sm-prompt').addEventListener('click', () => switchPromptProfile('SM'));
+  
+  // 현재 프롬프트 프로필 표시
+  loadCurrentPromptProfile();
   
   // 현재 탭의 URL 확인
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -122,34 +126,10 @@ function showCompanyList(companies, tabId) {
     analyzeButton.style.fontSize = '12px';
     analyzeButton.style.cursor = 'pointer';
     
-    // 모의 데이터 버튼
-    const mockButton = document.createElement('button');
-    mockButton.textContent = '모의';
-    mockButton.style.backgroundColor = '#4caf50';
-    mockButton.style.color = 'white';
-    mockButton.style.border = 'none';
-    mockButton.style.borderRadius = '4px';
-    mockButton.style.padding = '4px 8px';
-    mockButton.style.fontSize = '12px';
-    mockButton.style.cursor = 'pointer';
-    mockButton.style.marginRight = '5px';
-    
     // 버튼 컨테이너
     const buttonContainer = document.createElement('div');
     buttonContainer.style.display = 'flex';
-    buttonContainer.appendChild(mockButton);
     buttonContainer.appendChild(analyzeButton);
-    
-    // 모의 데이터 버튼 클릭 이벤트
-    mockButton.addEventListener('click', () => {
-      // 모의 데이터로 즉시 표시
-      showLoading();
-      setTimeout(() => {
-        // 모의 데이터 생성
-        const mockData = getMockAnalysisData(company.name);
-        showAnalysisResult(mockData);
-      }, 500);
-    });
     
     // 분석 버튼 클릭 이벤트
     analyzeButton.addEventListener('click', () => {
@@ -273,44 +253,6 @@ async function checkOllamaConnection() {
   }
 }
 
-// 모의 데이터 사용 함수
-function useMockData() {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const currentTab = tabs[0];
-    
-    chrome.tabs.sendMessage(
-      currentTab.id, 
-      { action: 'checkCompanyInfo' },
-      (response) => {
-        if (chrome.runtime.lastError || !response || !response.companiesInfo || response.companiesInfo.length === 0) {
-          // 회사 정보가 없으면 샘플 회사 데이터 사용
-          const sampleCompanies = [
-            { name: 'Google', industry: '기술' },
-            { name: 'Microsoft', industry: '기술' },
-            { name: 'Naver', industry: '기술' },
-            { name: 'Kakao', industry: '기술' }
-          ];
-          
-          // 바로 모의 데이터로 첫 번째 회사 분석 결과 표시
-          showLoading();
-          setTimeout(() => {
-            const mockData = getMockAnalysisData(sampleCompanies[0].name);
-            showAnalysisResult(mockData);
-          }, 50000);
-        } else {
-          // 현재 페이지의 첫 번째 회사 모의 데이터 표시
-          const company = response.companiesInfo[0];
-          showLoading();
-          setTimeout(() => {
-            const mockData = getMockAnalysisData(company.name);
-            showAnalysisResult(mockData);
-          }, 50000);
-        }
-      }
-    );
-  });
-}
-
 // 에러 메시지 표시
 function showError(message) {
   const errorContainer = document.getElementById('error-container');
@@ -410,102 +352,51 @@ function updateStars(rating) {
 function analyzeCompany(companyInfo) {
   console.log('회사 분석 요청:', companyInfo);
   
-  // 타임아웃 설정
-  let isTimedOut = false;
-  let responseReceived = false;
-  
-  // 10초 타임아웃 설정
-  const timeoutId = setTimeout(() => {
-    if (!responseReceived) {
-      isTimedOut = true;
-      console.warn('분석 요청 타임아웃');
-      showError('분석 요청 타임아웃 - 모의 데이터로 전환합니다.');
-      const mockData = getMockAnalysisData(companyInfo.name);
-      showAnalysisResult(mockData);
-    }
-  }, 1000000);
-  
   // 백그라운드 스크립트에 분석 요청
   chrome.runtime.sendMessage(
     { action: 'analyzeCompany', companyInfo },
     (response) => {
-      responseReceived = true;
-      clearTimeout(timeoutId);
-      
-      // 이미 타임아웃으로 모의 데이터를 표시한 경우 무시
-      if (isTimedOut) return;
-      
       console.log('분석 응답 수신:', response);
       if (response && response.success) {
         showAnalysisResult(response.data);
       } else {
         console.error('분석 오류:', response);
         showError('분석 오류: ' + (response?.error || '알 수 없는 오류'));
-        
-        // 오류 발생 시 모의 데이터 사용
-        const mockData = getMockAnalysisData(companyInfo.name);
-        showAnalysisResult(mockData);
       }
     }
   );
 }
 
-// 모의 분석 데이터 생성
-function getMockAnalysisData(companyName) {
-  // 모의 데이터 테이블
-  const mockAnalyses = {
-    'Google': {
-      name: 'Google',
-      salary: '업계 최고 수준의 연봉을 제공하며, 경력과 직급에 따라 차이가 있으나 대체로 시장 평균보다 30-40% 높은 수준입니다.',
-      benefits: '건강보험, 퇴직연금 외에도 무제한 간식, 사내 체육관, 자유로운 근무환경 등 다양한 복지를 제공합니다.',
-      jobFit: '기술직의 경우 높은 성장 가능성과 기술 역량 개발 기회가 많으며, 마케팅이나 디자인 직군도 글로벌 프로젝트 경험을 쌓을 수 있습니다.',
-      rating: 5,
-      summary: '높은 연봉과 훌륭한 복지, 기술 혁신 기회가 많은 최상위 기업입니다.'
-    },
-    'Microsoft': {
-      name: 'Microsoft',
-      salary: '기술 업계 상위권 연봉으로, 직급과 경력에 따라 다르지만 대체로 시장 평균보다 20-30% 높은 편입니다.',
-      benefits: '건강보험, 퇴직연금, 자유로운 휴가, 원격 근무 등 다양한 복지 혜택과 함께 일과 삶의 균형을 중시합니다.',
-      jobFit: '소프트웨어 개발, 클라우드 서비스, AI 등 다양한 기술 분야 경력을 쌓을 수 있으며, 글로벌 팀과의 협업 기회가 많습니다.',
-      rating: 5,
-      summary: '안정적인 대기업으로 글로벌 프로젝트 경험과 좋은 복지 혜택을 제공합니다.'
-    },
-    'Naver': {
-      name: 'Naver',
-      salary: '국내 IT 기업 중 상위 연봉 수준으로, 경력과 직무에 따라 차이가 있으나 시장 평균 대비 높은 편입니다.',
-      benefits: '건강보험, 퇴직연금, 사내 카페, 교통비 지원 등 다양한 복지 혜택을 제공합니다.',
-      jobFit: '개발자, 디자이너, 콘텐츠 기획자 등 다양한 직군에 적합하며, 국내 시장에서 높은 영향력을 가진 프로젝트에 참여할 기회가 많습니다.',
-      rating: 4,
-      summary: '국내 최고 IT 기업으로 안정적인 성장과 좋은 근무 환경을 제공합니다.'
-    },
-    'Kakao': {
-      name: 'Kakao',
-      salary: '국내 IT 기업 중 상위권 연봉 수준으로, 시장 평균보다 높은 편입니다.',
-      benefits: '건강보험, 퇴직연금, 유연근무제, 카페테리아 등 다양한 복지 혜택이 특징입니다.',
-      jobFit: '개발자, 디자이너, 서비스 기획자 등 다양한 직군에 적합하며, 혁신적인 서비스 개발 경험을 쌓을 수 있습니다.',
-      rating: 4,
-      summary: '창의적인 기업 문화와 다양한 서비스 포트폴리오를 가진 성장하는 기업입니다.'
-    }
-  };
+// 프롬프트 프로필 전환 함수
+function switchPromptProfile(profile) {
+  chrome.storage.local.set({ 'promptProfile': profile }, () => {
+    console.log(`Prompt profile switched to: ${profile}`);
+    showStatus(`Persona switched to: ${profile === 'JS' ? 'JeoungSu (32M, Developer)' : 'SuMin (25F, Marketing)'}`);
+    
+    // 버튼 스타일 업데이트
+    updatePromptButtonStyles(profile);
+  });
+}
+
+// 현재 프롬프트 프로필 로드
+function loadCurrentPromptProfile() {
+  chrome.storage.local.get('promptProfile', (data) => {
+    const profile = data.promptProfile || 'JS'; // 기본값: JS
+    console.log(`Current prompt profile: ${profile}`);
+    updatePromptButtonStyles(profile);
+  });
+}
+
+// 프롬프트 버튼 스타일 업데이트
+function updatePromptButtonStyles(activeProfile) {
+  const jsButton = document.getElementById('use-js-prompt');
+  const smButton = document.getElementById('use-sm-prompt');
   
-  // 대소문자 구분 없이 회사명 찾기 시도
-  const normalizedName = companyName.toLowerCase().trim();
-  
-  for (const [key, value] of Object.entries(mockAnalyses)) {
-    if (key.toLowerCase().includes(normalizedName) || 
-        normalizedName.includes(key.toLowerCase())) {
-      console.log(`모의 분석 일치: ${companyName} -> ${key}`);
-      return { ...value, name: companyName };  // 원래 회사명 유지
-    }
+  if (activeProfile === 'JS') {
+    jsButton.style.backgroundColor = '#4caf50';
+    smButton.style.backgroundColor = '#0077b5';
+  } else {
+    jsButton.style.backgroundColor = '#0077b5';
+    smButton.style.backgroundColor = '#4caf50';
   }
-  
-  // 일치하는 회사가 없으면 기본 분석 결과 생성
-  return {
-    name: companyName,
-    salary: '해당 회사의 연봉 정보는 현재 충분한 데이터가 없어 정확한 분석이 어렵습니다.',
-    benefits: '회사의 복지 제도에 대한 상세 정보가 제한적입니다.',
-    jobFit: '직무 적합도를 평가하기 위한 충분한 정보가 없습니다.',
-    rating: 3,
-    summary: '추가 정보가 필요한 회사입니다.'
-  };
 } 

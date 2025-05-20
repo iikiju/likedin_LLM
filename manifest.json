@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "LinkedIn 회사 분석기",
+  "name": "LinkedIn Company Analyzer",
   "version": "1.0",
-  "description": "LinkedIn에서 회사 정보를 분석하여 연봉, 복지, 직무 적합도를 LLM으로 요약합니다",
+  "description": "Analyze companies on LinkedIn with LLM",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -18,16 +18,14 @@
   },
   "permissions": [
     "activeTab",
-    "scripting",
     "storage"
   ],
   "host_permissions": [
-    "https://*.linkedin.com/*",
-    "http://localhost:11434/*"
+    "*://*.linkedin.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://*.linkedin.com/*"],
+      "matches": ["*://*.linkedin.com/*"],
       "js": ["content.js"],
       "css": ["styles.css"]
     }
@@ -35,6 +33,10 @@
   "background": {
     "service_worker": "background.js"
   },
+  "web_accessible_resources": [{
+    "resources": ["JS_prompt.json", "SM_prompt.json"],
+    "matches": ["<all_urls>"]
+  }],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:11434 http://localhost:*"
   }
