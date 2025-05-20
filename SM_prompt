@@ -4,8 +4,9 @@ async function callLLMApi(companyInfo, companyData) {
 
   const jobContent = companyInfo.description || companyInfo.description || JSON.stringify(companyInfo);
 
-  const prompt = `I'm SuMin, 25 years old woman, live in Seoul, South Korea.
-    I want to work in an IT company full time position.
+  const prompt = `**please remember that never the hallucination about the analysis result.
+    I'm SuMin, 25 years old woman, living in Seoul, South Korea.
+    I want to work in an marketing company full time position.
     I just graduated from the Department of Industrial Engineering in UNIST.
     I have a strong interest in data analysis and machine learning, and I have experience with Python.
     I have a good understanding of statistics and data visualization.

@@ -1,4 +1,5 @@
-const prompt = `I'm JeoungSu, a 32-year-old man, living in Busan, South Korea.
+const prompt = `**please remember that never the hallucination about the analysis result.
+    I'm JeoungSu, a 32-year-old man, living in Busan, South Korea.
     I am currently a Software Engineer at a fintech company and am considering a job change.
     I graduated from Pusan National University with a degree in Computer Science.
     I have 5+ years of experience in backend development, proficient in Java, JavaScript, and SQL.
