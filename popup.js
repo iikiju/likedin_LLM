@@ -5,9 +5,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('check-ollama').addEventListener('click', checkOllamaConnection);
   document.getElementById('use-js-prompt').addEventListener('click', () => switchPromptProfile('JS'));
   document.getElementById('use-sm-prompt').addEventListener('click', () => switchPromptProfile('SM'));
+  document.getElementById('custom-profile-btn').addEventListener('click', toggleCustomProfileForm);
+  document.getElementById('save-profile').addEventListener('click', saveCustomProfile);
+  document.getElementById('cancel-profile').addEventListener('click', hideCustomProfileForm);
   
   // 현재 프롬프트 프로필 표시
   loadCurrentPromptProfile();
+  
+  // 커스텀 프로필 불러오기
+  loadCustomProfileData();
   
   // 현재 탭의 URL 확인
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -367,11 +373,88 @@ function analyzeCompany(companyInfo) {
   );
 }
 
+// 커스텀 프로필 폼 토글
+function toggleCustomProfileForm() {
+  const form = document.getElementById('custom-profile-form');
+  if (form.classList.contains('hidden')) {
+    form.classList.remove('hidden');
+  } else {
+    form.classList.add('hidden');
+  }
+}
+
+// 커스텀 프로필 폼 숨기기
+function hideCustomProfileForm() {
+  document.getElementById('custom-profile-form').classList.add('hidden');
+}
+
+// 커스텀 프로필 저장
+function saveCustomProfile() {
+  const customProfile = {
+    name: document.getElementById('custom-name').value,
+    age: document.getElementById('custom-age').value,
+    location: document.getElementById('custom-location').value,
+    major: document.getElementById('custom-major').value,
+    field: document.getElementById('custom-field').value,
+    salary: document.getElementById('custom-salary').value,
+    workType: document.getElementById('custom-worktype').value,
+    skills: document.getElementById('custom-skills').value
+  };
+  
+  // 저장
+  chrome.storage.local.set({ 'customProfile': customProfile }, () => {
+    console.log('커스텀 프로필 저장됨:', customProfile);
+    
+    // 커스텀 프로필을 현재 프로필로 설정
+    chrome.storage.local.set({ 'promptProfile': 'CUSTOM' }, () => {
+      updatePromptButtonStyles('CUSTOM');
+      hideCustomProfileForm();
+      showStatus(`커스텀 프로필 "${customProfile.name}" (${customProfile.age}세)로 설정되었습니다.`);
+    });
+  });
+}
+
+// 커스텀 프로필 데이터 로드
+function loadCustomProfileData() {
+  chrome.storage.local.get('customProfile', (data) => {
+    if (data.customProfile) {
+      // 폼에 데이터 채우기
+      document.getElementById('custom-name').value = data.customProfile.name || '';
+      document.getElementById('custom-age').value = data.customProfile.age || '';
+      document.getElementById('custom-location').value = data.customProfile.location || '';
+      document.getElementById('custom-major').value = data.customProfile.major || '';
+      document.getElementById('custom-field').value = data.customProfile.field || '';
+      document.getElementById('custom-salary').value = data.customProfile.salary || '';
+      document.getElementById('custom-worktype').value = data.customProfile.workType || 'full';
+      document.getElementById('custom-skills').value = data.customProfile.skills || '';
+    }
+  });
+}
+
 // 프롬프트 프로필 전환 함수
 function switchPromptProfile(profile) {
   chrome.storage.local.set({ 'promptProfile': profile }, () => {
     console.log(`Prompt profile switched to: ${profile}`);
-    showStatus(`Persona switched to: ${profile === 'JS' ? 'JeoungSu (32M, Developer)' : 'SuMin (25F, Marketing)'}`);
+    
+    let displayName = '';
+    if (profile === 'JS') {
+      displayName = 'JeoungSu (32M, Developer)';
+    } else if (profile === 'SM') {
+      displayName = 'SuMin (25F, Marketing)';
+    } else if (profile === 'CUSTOM') {
+      chrome.storage.local.get('customProfile', (data) => {
+        if (data.customProfile) {
+          displayName = `${data.customProfile.name} (${data.customProfile.age}세)`;
+        } else {
+          displayName = '커스텀 프로필 (설정 필요)';
+        }
+        showStatus(`Persona switched to: ${displayName}`);
+      });
+      updatePromptButtonStyles(profile);
+      return;
+    }
+    
+    showStatus(`Persona switched to: ${displayName}`);
     
     // 버튼 스타일 업데이트
     updatePromptButtonStyles(profile);
@@ -391,12 +474,19 @@ function loadCurrentPromptProfile() {
 function updatePromptButtonStyles(activeProfile) {
   const jsButton = document.getElementById('use-js-prompt');
   const smButton = document.getElementById('use-sm-prompt');
+  const customButton = document.getElementById('custom-profile-btn');
   
+  // 모든 버튼 기본 스타일
+  jsButton.style.backgroundColor = '#0077b5';
+  smButton.style.backgroundColor = '#0077b5';
+  customButton.style.backgroundColor = '#0077b5';
+  
+  // 활성 버튼 스타일
   if (activeProfile === 'JS') {
     jsButton.style.backgroundColor = '#4caf50';
-    smButton.style.backgroundColor = '#0077b5';
-  } else {
-    jsButton.style.backgroundColor = '#0077b5';
+  } else if (activeProfile === 'SM') {
     smButton.style.backgroundColor = '#4caf50';
+  } else if (activeProfile === 'CUSTOM') {
+    customButton.style.backgroundColor = '#4caf50';
   }
 } 

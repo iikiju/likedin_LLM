@@ -84,6 +84,51 @@
       background-color: #ffebee;
       border-radius: 4px;
     }
+    /* 커스텀 프로필 폼 스타일 */
+    .custom-profile-form {
+      background-color: #f9f9f9;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+    }
+    .form-group {
+      margin-bottom: 8px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 3px;
+      color: #555;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .form-actions button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .save-btn {
+      background-color: #4caf50;
+      color: white;
+    }
+    .cancel-btn {
+      background-color: #f44336;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -93,9 +138,55 @@
     <button id="check-ollama" class="tool-button">LLM-Test</button>
     <button id="use-js-prompt" class="tool-button">JS-Profile</button>
     <button id="use-sm-prompt" class="tool-button">SM-Profile</button>
+    <button id="custom-profile-btn" class="tool-button">Custom</button>
   </div>
   
   <div id="error-container" class="error-message hidden"></div>
+  
+  <!-- 커스텀 프로필 입력 폼 -->
+  <div id="custom-profile-form" class="custom-profile-form hidden">
+    <h3 style="margin-top:0;font-size:14px;">Custom Profile</h3>
+    <div class="form-group">
+      <label for="custom-name">이름:</label>
+      <input type="text" id="custom-name" placeholder="예: 홍길동">
+    </div>
+    <div class="form-group">
+      <label for="custom-age">나이:</label>
+      <input type="number" id="custom-age" placeholder="예: 28">
+    </div>
+    <div class="form-group">
+      <label for="custom-location">거주지:</label>
+      <input type="text" id="custom-location" placeholder="예: 서울">
+    </div>
+    <div class="form-group">
+      <label for="custom-major">전공:</label>
+      <input type="text" id="custom-major" placeholder="예: 컴퓨터 공학">
+    </div>
+    <div class="form-group">
+      <label for="custom-field">희망 분야:</label>
+      <input type="text" id="custom-field" placeholder="예: 웹 개발">
+    </div>
+    <div class="form-group">
+      <label for="custom-salary">희망 연봉(만원):</label>
+      <input type="number" id="custom-salary" placeholder="예: 5000">
+    </div>
+    <div class="form-group">
+      <label for="custom-worktype">근무 형태:</label>
+      <select id="custom-worktype">
+        <option value="full">풀타임</option>
+        <option value="part">파트타임</option>
+        <option value="freelance">프리랜서</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="custom-skills">보유 기술:</label>
+      <input type="text" id="custom-skills" placeholder="예: JavaScript, Python, SQL">
+    </div>
+    <div class="form-actions">
+      <button id="cancel-profile" class="cancel-btn">취소</button>
+      <button id="save-profile" class="save-btn">저장</button>
+    </div>
+  </div>
   
   <div id="company-info"></div>
   

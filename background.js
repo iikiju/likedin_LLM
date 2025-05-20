@@ -65,15 +65,66 @@ async function callLLMApi(companyInfo, companyData) {
   const { promptProfile = 'JS' } = await chrome.storage.local.get('promptProfile');
   console.log(`Using prompt profile: ${promptProfile}`);
   
-  // JSON 파일에서 프롬프트 로드
+  // 커스텀 프로필인 경우 사용자 입력 데이터 가져오기
+  let customProfileData = null;
+  if (promptProfile === 'CUSTOM') {
+    const { customProfile } = await chrome.storage.local.get('customProfile');
+    customProfileData = customProfile;
+    console.log('Using custom profile data:', customProfileData);
+  }
+  
+  // JSON 파일에서 프롬프트 로드 또는 커스텀 프롬프트 생성
   let promptData;
   try {
-    const promptFile = promptProfile === 'JS' ? 'JS_prompt.json' : 'SM_prompt.json';
-    const response = await fetch(chrome.runtime.getURL(promptFile));
-    promptData = await response.json();
-    console.log(`Loaded prompt from ${promptFile}`);
+    if (promptProfile === 'CUSTOM' && customProfileData) {
+      // 커스텀 프로필로 프롬프트 생성
+      const workTypeText = {
+        'full': '풀타임',
+        'part': '파트타임',
+        'freelance': '프리랜서'
+      }[customProfileData.workType] || '풀타임';
+      
+      const salaryInKRW = parseInt(customProfileData.salary) * 10000; // 만원 단위를 원 단위로 변환
+      
+      promptData = {
+        prompt: `**please remember that never the hallucination about the analysis result. you must analyze the company information and my information.
+    I'm ${customProfileData.name}, ${customProfileData.age} years old, living in ${customProfileData.location}, South Korea.
+    I want to work in ${customProfileData.field} as a ${workTypeText} position.
+    I majored in ${customProfileData.major}.
+    I have skills in ${customProfileData.skills}.
+    I am looking for a company that values innovation and creativity, and I want to work in a collaborative environment.
+    I am also interested in companies that offer opportunities for professional development and career growth.
+    I am looking for a company that values work-life balance and offers a positive work environment.
+    I am aiming for a salary of ${salaryInKRW} KRW per year.
+
+  The information about the company recommended to me is as follows.
+  COMPANY_NAME to COMPANY_POSITION position.
+  JOB_CONTENT
+  Compare my basic information and the company information mentioned above to analyze whether the company is a good fit for me and provide a detailed analysis of the following aspects.
+=============================================================================================================================================
+[Salary and Compensation]
+  - 
+[Benefits]
+  -
+[Job Fit]
+  -
+[Company Culture]
+  - 
+[Summary]
+  - start sentence with "In summary, This company rating is "insert number" out of 5. This company and ${customProfileData.name} are ~"
+=============================================================================================================================================
+Please provide your analysis in English following the exact format above.`
+      };
+      console.log('Created custom prompt template');
+    } else {
+      // 기존 프로필 사용
+      const promptFile = promptProfile === 'JS' ? 'JS_prompt.json' : 'SM_prompt.json';
+      const response = await fetch(chrome.runtime.getURL(promptFile));
+      promptData = await response.json();
+      console.log(`Loaded prompt from ${promptFile}`);
+    }
   } catch (error) {
-    console.error('Error loading prompt file:', error);
+    console.error('Error loading prompt:', error);
     // 오류 발생 시 기본 프롬프트 사용
     promptData = { 
       prompt: promptProfile === 'JS' ? 
