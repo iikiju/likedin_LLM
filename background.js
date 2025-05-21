@@ -111,7 +111,7 @@ async function callLLMApi(companyInfo, companyData) {
 [Company Culture]
   - 
 [Summary]
-  - start sentence with "In summary, This company rating is "insert number" out of 5. This company and ${customProfileData.name} are ~"
+  - start sentence with "In summary, This company rating is "insert number" out of 5. When comparing companies based on ${customProfileData.name} desired salary, major, and experience, are ~"
 =============================================================================================================================================
 Please provide your analysis in English following the exact format above.`
       };
@@ -203,10 +203,10 @@ Please provide your analysis in English following the exact format above.`
 
       // Summary에서 rating 추출
       if (summaryMatch) {
-        const ratingMatch = summaryMatch[1].match(/rating is (\d+) out of 5/i);
+        const ratingMatch = summaryMatch[1].match(/rating is (\d+(?:\.\d+)?) out of 5/i);
         if (ratingMatch) {
           const rating = parseInt(ratingMatch[1]);
-          if (!isNaN(rating) && rating >= 1 && rating <= 5) {
+          if (!isNaN(rating) && rating >= 0 && rating <= 5) {
             sections.rating = rating;
           }
         }

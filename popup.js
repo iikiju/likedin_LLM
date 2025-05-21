@@ -346,10 +346,15 @@ function updateStars(rating) {
   const stars = document.querySelectorAll('.star');
   stars.forEach(star => {
     const starRating = parseInt(star.getAttribute('data-rating'));
-    if (starRating <= rating) {
+    if (starRating <= Math.floor(rating)) {
       star.classList.add('active');
+      star.innerText = '★';
+    } else if (starRating === Math.ceil(rating) && rating % 1 >= 0.5) {
+      star.classList.add('active');
+      star.innerText = '☆'; // 반쪽 별(혹은 커스텀 SVG로 대체 가능)
     } else {
       star.classList.remove('active');
+      star.innerText = '★';
     }
   });
 }
