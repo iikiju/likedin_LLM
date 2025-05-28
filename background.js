@@ -56,9 +56,9 @@ async function searchCompanyInfo(companyName, jobDetails = null) {
   }
 }
 
-// LLM API 호출 (로컬 Ollama 사용)
+// LLM API 호출 (OpenAI API 사용)
 async function callLLMApi(companyInfo, companyData) {
-  const apiUrl = 'http://localhost:11434/api/generate';
+  const apiUrl = 'https://api.openai.com/v1/chat/completions';
   const jobContent = companyInfo.description || companyInfo.description || JSON.stringify(companyInfo);
 
   // 현재 선택된 프롬프트 프로필 가져오기
@@ -88,14 +88,17 @@ async function callLLMApi(companyInfo, companyData) {
       
       promptData = {
         prompt: `**please remember that never the hallucination about the analysis result. you must analyze the company information and my information.
-    I'm ${customProfileData.name}, ${customProfileData.age} years old, living in ${customProfileData.location}, South Korea.
-    I want to work in ${customProfileData.field} as a ${workTypeText} position.
-    I majored in ${customProfileData.major}.
-    I have skills in ${customProfileData.skills}.
+    ${customProfileData.toggleStates.name ? `I'm ${customProfileData.name},` : 'I am'}
+    ${customProfileData.toggleStates.age ? `${customProfileData.age} years old,` : ''}
+    ${customProfileData.toggleStates.location ? `living in ${customProfileData.location}, South Korea.` : ''}
+    ${customProfileData.toggleStates.field ? `I want to work in ${customProfileData.field}` : 'I am looking for a job'}
+    ${customProfileData.toggleStates.workType ? `as a ${workTypeText} position.` : '.'}
+    ${customProfileData.toggleStates.major ? `I majored in ${customProfileData.major}.` : ''}
+    ${customProfileData.toggleStates.skills ? `I have skills in ${customProfileData.skills}.` : ''}
+    ${customProfileData.toggleStates.salary ? `I am aiming for a salary of ${parseInt(customProfileData.salary) * 10000} KRW per year.` : ''}
     I am looking for a company that values innovation and creativity, and I want to work in a collaborative environment.
     I am also interested in companies that offer opportunities for professional development and career growth.
     I am looking for a company that values work-life balance and offers a positive work environment.
-    I am aiming for a salary of ${salaryInKRW} KRW per year.
 
   The information about the company recommended to me is as follows.
   COMPANY_NAME to COMPANY_POSITION position.
@@ -111,7 +114,7 @@ async function callLLMApi(companyInfo, companyData) {
 [Company Culture]
   - 
 [Summary]
-  - start sentence with "In summary, This company rating is "insert number" out of 5. When comparing companies based on ${customProfileData.name} desired salary, major, and experience, are ~"
+  - start sentence with "In summary, This company rating is "insert number" out of 5. When comparing companies based on ${customProfileData.toggleStates.name ? customProfileData.name : 'my profile'}
 =============================================================================================================================================
 Please provide your analysis in English following the exact format above.`
       };
@@ -140,7 +143,7 @@ Please provide your analysis in English following the exact format above.`
     .replace('JOB_CONTENT', jobContent);
 
   try {
-    console.log('Ollama API 호출 시작...');
+    console.log('OpenAI API 호출 시작...');
     console.log('분석할 내용:', jobContent);
     console.log('사용 중인 페르소나:', promptProfile);
     
@@ -150,32 +153,42 @@ Please provide your analysis in English following the exact format above.`
         new Promise((_, reject) => setTimeout(() => reject(new Error('요청 타임아웃')), timeout))
       ]);
     };
+
+    // OpenAI API 키 가져오기
+    const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
+    if (!openaiApiKey) {
+      throw new Error('OpenAI API 키가 설정되지 않았습니다.');
+    }
+
     const response = await fetchWithTimeout(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`
       },
       body: JSON.stringify({
-        model: 'mistral', // mistral, phi, tinyllama, qwen3:1.7b, qwen3:8b, 
-        prompt: prompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-          top_p: 0.9,
-          top_k: 40,
-          num_ctx: 8192,
-          num_thread: 8,
-          repeat_penalty: 1.1
-        }
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that analyzes company information and provides detailed insights.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
       }),
     }, 600000);
 
     if (!response.ok) {
-      throw new Error('LLM API 호출 실패');
+      throw new Error('OpenAI API 호출 실패');
     }
 
     const data = await response.json();
-    let resultText = data.response || '';
+    let resultText = data.choices[0].message.content || '';
 
     // LLM 출력 파싱
     const parseLLMResponse = (text) => {
@@ -228,7 +241,7 @@ Please provide your analysis in English following the exact format above.`
       rating: parsedResult.rating
     };
   } catch (error) {
-    console.error('LLM API 호출 오류:', error);
+    console.error('OpenAI API 호출 오류:', error);
     throw error;
   }
 }

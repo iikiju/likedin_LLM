@@ -221,4 +221,34 @@ body {
 
 .check-ollama-btn:active {
   background-color: #004b7c;
+}
+
+/* 프로필 정보 섹션 스타일 */
+.profile-section {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.info-item {
+  margin-bottom: 8px;
+  padding: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item strong {
+  color: #0077b5;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.info-item div {
+  color: #666;
+  font-size: 13px;
+  margin-left: 10px;
 } 

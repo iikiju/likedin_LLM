@@ -1,26 +1,41 @@
 // LinkedIn 페이지에 회사 분석 버튼 추가
 document.addEventListener('DOMContentLoaded', () => {
   console.log('LinkedIn 회사 분석기 로드됨');
-  // 페이지 로드 후 버튼 추가 시도
-  setTimeout(() => {
+  
+  // iframe 내부에서 실행 중인지 확인
+  const isInIframe = window.self !== window.top;
+  console.log('iframe 내부 실행 여부:', isInIframe);
+  
+  // 메인 프레임에서만 버튼 추가
+  if (!isInIframe) {
+    // 페이지 로드 후 즉시 버튼 추가 시도
     addAnalysisButtons();
-  }, 150000);
 
-  // 동적 콘텐츠에 대응하기 위한 MutationObserver 설정
-  const observer = new MutationObserver((mutations) => {
-    setTimeout(() => {
+    // 동적 콘텐츠에 대응하기 위한 MutationObserver 설정
+    const observer = new MutationObserver((mutations) => {
       addAnalysisButtons();
-    }, 100000);
-  });
+    });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
 });
 
 // LinkedIn 메시지 리스너 (팝업과의 통신)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('메시지 수신:', request);
+  
+  // iframe 내부에서 실행 중인지 확인
+  const isInIframe = window.self !== window.top;
+  if (isInIframe) {
+    console.log('iframe 내부에서 메시지 수신, 상위 프레임으로 전달');
+    // 상위 프레임으로 메시지 전달
+    window.parent.postMessage(request, '*');
+    return true;
+  }
+  
   if (request.action === 'checkCompanyInfo') {
     // 현재 페이지에서 모든 회사 정보 추출
     const companiesInfo = extractAllCompaniesInfo();
@@ -35,6 +50,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: true, companyInfo: companyInfo });
     } else {
       sendResponse({ success: false, error: '회사 정보를 찾을 수 없습니다.' });
+    }
+  } else if (request.action === 'extractProfileInfo') {
+    console.log('프로필 정보 추출 요청 수신');
+    try {
+      // 프로필 정보 추출
+      const profileInfo = extractProfileInfo();
+      console.log('추출된 프로필 정보:', profileInfo);
+      sendResponse(profileInfo);
+    } catch (error) {
+      console.error('프로필 정보 추출 중 오류:', error);
+      sendResponse({ success: false, error: error.message });
     }
   }
   return true; // 비동기 응답을 위해 true 반환
@@ -53,7 +79,7 @@ function extractAllCompaniesInfo() {
 
   // 1. 채용 공고의 회사 정보 (메인 페이지의 회사)
   const mainCompanyElement = document.querySelector(
-    '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name'
+    '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name, .org-top-card-summary__title'
   );
   if (mainCompanyElement) {
     const companyName = mainCompanyElement.textContent.trim();
@@ -69,10 +95,10 @@ function extractAllCompaniesInfo() {
 
   // 2. 회사 검색 결과 및 채용 카드
   const companyElements = document.querySelectorAll(
-    '.entity-result__title-text, .job-card-container, .company-name, .job-card-list__title'
+    '.entity-result__title-text, .job-card-container, .company-name, .job-card-list__title, .org-top-card-summary__title'
   );
   companyElements.forEach((element) => {
-    const companyNameElement = element.querySelector('a, span');
+    const companyNameElement = element.querySelector('a, span') || element;
     if (companyNameElement) {
       const companyName = companyNameElement.textContent.trim();
       if (companyName && !companies.some((c) => c.name === companyName)) {
@@ -566,4 +592,164 @@ function findAboutJobSection() {
 
 function isEnglish(text) {
   return /^[\x00-\x7F]*$/.test(text.replace(/\s/g, ''));
+}
+
+// 페이지를 맨 아래까지 스크롤하는 함수
+async function scrollToBottom() {
+  return new Promise((resolve) => {
+    let lastScrollHeight = 0;
+    const scrollInterval = setInterval(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+      
+      // 스크롤이 더 이상 내려가지 않으면 종료
+      if (document.body.scrollHeight === lastScrollHeight) {
+        clearInterval(scrollInterval);
+        // 잠시 대기 후 resolve
+        setTimeout(resolve, 1000);
+      }
+      lastScrollHeight = document.body.scrollHeight;
+    }, 500);
+  });
+}
+
+// 프로필 정보 추출 함수 수정
+async function extractProfileInfo() {
+  console.log('프로필 정보 추출 시작');
+  
+  try {
+    // 페이지를 맨 아래까지 스크롤
+    await scrollToBottom();
+    console.log('페이지 스크롤 완료');
+
+    // DOM 구조 디버깅
+    console.log('=== DOM 구조 디버깅 ===');
+    console.log('전체 프로필 섹션:', document.querySelector('.scaffold-layout__main')?.outerHTML);
+    console.log('이름 요소:', document.querySelector('h1.text-heading-xlarge')?.outerHTML);
+    console.log('직함 요소:', document.querySelector('.text-body-medium.break-words')?.outerHTML);
+    console.log('경력 섹션:', document.querySelector('section#experience')?.outerHTML);
+    console.log('학력 섹션:', document.querySelector('section#education')?.outerHTML);
+    console.log('기술 섹션:', document.querySelector('section#skills')?.outerHTML);
+
+    const profileInfo = {
+      name: '',
+      title: '',
+      company: '',
+      education: [],
+      experience: [],
+      projects: [],
+      certifications: [],
+      skills: []
+    };
+
+    // 기본 정보 추출
+    const nameElement = document.querySelector('h1.text-heading-xlarge span[aria-hidden="true"], .inline.t-24.v-align-middle.break-words span[aria-hidden="true"]');
+    console.log('이름 요소 찾음:', nameElement?.outerHTML);
+    if (nameElement) {
+      profileInfo.name = nameElement.textContent.trim();
+      console.log('이름 추출:', profileInfo.name);
+    }
+
+    // 직함과 회사 정보 추출
+    const titleSpans = document.querySelectorAll('.text-body-medium.break-words span[aria-hidden="true"], .pv-text-details__left-panel .text-body-medium span[aria-hidden="true"]');
+    console.log('직함 요소들 찾음:', titleSpans.length, Array.from(titleSpans).map(el => el.outerHTML));
+    if (titleSpans.length > 0) {
+      const titleParts = Array.from(titleSpans)
+        .map(span => span.textContent.trim())
+        .filter(text => text && text !== '·')
+        .join(' ');
+      
+      if (titleParts) {
+        const parts = titleParts.split('·').map(part => part.trim());
+        if (parts.length > 0) {
+          profileInfo.company = parts[0];
+          if (parts.length > 1) {
+            profileInfo.title = parts[1];
+          }
+        }
+      }
+      console.log('회사/직함 추출:', { company: profileInfo.company, title: profileInfo.title });
+    }
+
+    // 경력 정보 추출
+    const experienceSection = document.querySelector('section#experience, section[data-section="experience"]');
+    console.log('경력 섹션 찾음:', experienceSection?.outerHTML);
+    if (experienceSection) {
+      const experienceItems = experienceSection.querySelectorAll('.pvs-list__item--line-separated, .pvs-entity--padded');
+      console.log('경력 항목들 찾음:', experienceItems.length);
+      experienceItems.forEach((item, index) => {
+        console.log(`경력 항목 ${index + 1}:`, item.outerHTML);
+        const spans = item.querySelectorAll('span[aria-hidden="true"]');
+        console.log(`경력 항목 ${index + 1}의 span들:`, Array.from(spans).map(el => el.outerHTML));
+        const textParts = Array.from(spans)
+          .map(span => span.textContent.trim())
+          .filter(text => text);
+
+        if (textParts.length > 0) {
+          const experience = {
+            title: textParts[0] || '',
+            company: textParts[1] || '',
+            period: textParts[2] || '',
+            description: textParts.slice(3).join(' ') || ''
+          };
+          profileInfo.experience.push(experience);
+          console.log('경력 정보 추출:', experience);
+        }
+      });
+    }
+
+    // 학력 정보 추출
+    const educationSection = document.querySelector('section#education, section[data-section="education"]');
+    console.log('학력 섹션 찾음:', educationSection?.outerHTML);
+    if (educationSection) {
+      const educationItems = educationSection.querySelectorAll('.pvs-list__item--line-separated, .pvs-entity--padded');
+      console.log('학력 항목들 찾음:', educationItems.length);
+      educationItems.forEach((item, index) => {
+        console.log(`학력 항목 ${index + 1}:`, item.outerHTML);
+        const spans = item.querySelectorAll('span[aria-hidden="true"]');
+        console.log(`학력 항목 ${index + 1}의 span들:`, Array.from(spans).map(el => el.outerHTML));
+        const textParts = Array.from(spans)
+          .map(span => span.textContent.trim())
+          .filter(text => text);
+
+        if (textParts.length > 0) {
+          const education = {
+            school: textParts[0] || '',
+            degree: textParts[1] || '',
+            period: textParts[2] || '',
+            gpa: textParts[3] || '',
+            focus: textParts[4] || ''
+          };
+          profileInfo.education.push(education);
+          console.log('학력 정보 추출:', education);
+        }
+      });
+    }
+
+    // 보유기술 추출
+    const skillsSection = document.querySelector('section#skills, section[data-section="skills"]');
+    console.log('기술 섹션 찾음:', skillsSection?.outerHTML);
+    if (skillsSection) {
+      const skillItems = skillsSection.querySelectorAll('.pvs-list__item--line-separated, .pvs-entity--padded');
+      console.log('기술 항목들 찾음:', skillItems.length);
+      skillItems.forEach((item, index) => {
+        console.log(`기술 항목 ${index + 1}:`, item.outerHTML);
+        const spans = item.querySelectorAll('span[aria-hidden="true"]');
+        console.log(`기술 항목 ${index + 1}의 span들:`, Array.from(spans).map(el => el.outerHTML));
+        const textParts = Array.from(spans)
+          .map(span => span.textContent.trim())
+          .filter(text => text);
+
+        if (textParts.length > 0) {
+          profileInfo.skills.push(textParts[0]);
+          console.log('기술 추출:', textParts[0]);
+        }
+      });
+    }
+
+    console.log('프로필 정보 추출 완료:', profileInfo);
+    return { success: true, profileInfo };
+  } catch (error) {
+    console.error('프로필 정보 추출 중 오류:', error);
+    return { success: false, error: error.message };
+  }
 }
