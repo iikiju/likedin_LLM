@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 동적 콘텐츠에 대응하기 위한 MutationObserver 설정
     const observer = new MutationObserver((mutations) => {
+      console.log('DOM 변경 감지');
       addAnalysisButtons();
     });
 
@@ -51,6 +52,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else {
       sendResponse({ success: false, error: '회사 정보를 찾을 수 없습니다.' });
     }
+  } else if (request.action === 'getCompanyInfo') {
+    console.log('회사 정보 요청:', request.companyName);
+    const companyInfo = extractCompanyInfo();
+    
+    if (companyInfo.name === request.companyName) {
+      console.log('회사 정보 전송:', companyInfo);
+      sendResponse({ success: true, companyInfo });
+    } else {
+      console.log('회사 정보 불일치');
+      sendResponse({ success: false, error: '회사 정보를 찾을 수 없습니다.' });
+    }
   } else if (request.action === 'extractProfileInfo') {
     console.log('프로필 정보 추출 요청 수신');
     try {
@@ -62,6 +74,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.error('프로필 정보 추출 중 오류:', error);
       sendResponse({ success: false, error: error.message });
     }
+  } else if (request.action === 'extractGlassdoorInfo') {
+    extractGlassdoorInfo(request.companyName)
+      .then(response => sendResponse(response))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // 비동기 응답을 위해 true 반환
   }
   return true; // 비동기 응답을 위해 true 반환
 });
@@ -321,24 +338,89 @@ function extractIndustryInfo(companyName) {
   return '';
 }
 
-// 단일 회사 정보 추출 (이전 호환성 유지)
+// 회사 정보 추출 함수
 function extractCompanyInfo() {
-  console.log('회사 정보 추출 시도 (단일)');
-  const allCompanies = extractAllCompaniesInfo();
-  const currentCompany = allCompanies.find((company) => company.isCurrent);
+  console.log('회사 정보 추출 함수 실행');
+  
+  const companyInfo = {
+    name: '',
+    industry: '',
+    description: '',
+    size: '',
+    founded: '',
+    headquarters: '',
+    specialties: [],
+    website: '',
+    followers: '',
+    employees: []
+  };
 
-  if (currentCompany) {
-    console.log('현재 회사 정보 추출됨:', currentCompany.name);
-    return currentCompany;
+  // 회사명 추출
+  const nameElement = document.querySelector('.org-top-card-summary__title, .job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name');
+  if (nameElement) {
+    companyInfo.name = nameElement.textContent.trim();
   }
 
-  if (allCompanies.length > 0) {
-    console.log('첫 번째 회사 정보 반환:', allCompanies[0].name);
-    return allCompanies[0];
+  // 산업 정보 추출
+  const industryElement = document.querySelector('.org-top-card-summary-info-list__info-item');
+  if (industryElement) {
+    companyInfo.industry = industryElement.textContent.trim();
   }
 
-  console.log('회사 정보를 찾을 수 없음');
-  return null;
+  // 회사 설명 추출
+  const descriptionElement = document.querySelector('.org-about-us-organization-description__text');
+  if (descriptionElement) {
+    companyInfo.description = descriptionElement.textContent.trim();
+  }
+
+  // 회사 규모 추출
+  const sizeElement = document.querySelector('.org-about-company-module__company-size-definition-text');
+  if (sizeElement) {
+    companyInfo.size = sizeElement.textContent.trim();
+  }
+
+  // 설립일 추출
+  const foundedElement = document.querySelector('.org-about-company-module__founded');
+  if (foundedElement) {
+    companyInfo.founded = foundedElement.textContent.trim();
+  }
+
+  // 본사 위치 추출
+  const headquartersElement = document.querySelector('.org-about-company-module__headquarters');
+  if (headquartersElement) {
+    companyInfo.headquarters = headquartersElement.textContent.trim();
+  }
+
+  // 전문 분야 추출
+  const specialtiesElements = document.querySelectorAll('.org-about-company-module__specialities-item');
+  if (specialtiesElements.length > 0) {
+    companyInfo.specialties = Array.from(specialtiesElements).map(el => el.textContent.trim());
+  }
+
+  // 웹사이트 추출
+  const websiteElement = document.querySelector('.org-about-us-company-module__website');
+  if (websiteElement) {
+    companyInfo.website = websiteElement.href;
+  }
+
+  // 팔로워 수 추출
+  const followersElement = document.querySelector('.org-top-card-summary-info-list__info-item--followers');
+  if (followersElement) {
+    companyInfo.followers = followersElement.textContent.trim();
+  }
+
+  // 주요 직원 정보 추출
+  const employeeElements = document.querySelectorAll('.org-people-profile-card');
+  if (employeeElements.length > 0) {
+    companyInfo.employees = Array.from(employeeElements).map(el => ({
+      name: el.querySelector('.org-people-profile-card__profile-title')?.textContent.trim() || '',
+      title: el.querySelector('.org-people-profile-card__profile-position')?.textContent.trim() || '',
+      image: el.querySelector('.org-people-profile-card__profile-image')?.src || ''
+    }));
+  }
+
+  console.log('추출된 회사 정보:', companyInfo);
+  return companyInfo;
 }
 
 // 선택자에서 텍스트 추출
@@ -350,64 +432,128 @@ function extractFromSelector(selector) {
 // LinkedIn 회사 요소에 분석 버튼 추가
 function addAnalysisButtons() {
   console.log('분석 버튼 추가 시도');
-  const selectors = [
-    '.org-top-card-summary__title',
-    '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name',
-    '.entity-result__title-text',
-    '.job-card-container',
-    '.company-name',
-    '.feed-shared-actor__meta a:first-child',
-    '.artdeco-entity-lockup__title',
-    '.job-card-container__company-name',
-  ];
+  
+  // 기존 분석 버튼 찾기 (더 구체적인 선택자 사용)
+  const existingButtons = document.querySelectorAll('button.linkedin-analyzer-btn');
+  console.log('기존 분석 버튼 수:', existingButtons.length);
+  
+  if (existingButtons.length === 0) {
+    console.log('분석 버튼을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+    return;
+  }
+  
+  existingButtons.forEach((button, index) => {
+    console.log(`처리 중인 버튼 ${index + 1}:`, button.outerHTML);
+    
+    // 이미 회사 정보 버튼이 추가된 버튼은 건너뛰기
+    if (button.nextElementSibling && button.nextElementSibling.classList.contains('linkedin-analyzer-btn')) {
+      console.log('이미 회사 정보 버튼이 있는 버튼 건너뛰기');
+      return;
+    }
+    
+    // 회사명 찾기 (여러 방법 시도)
+    let companyName = '';
+    
+    // 1. data-analysis-added 속성이 있는 가장 가까운 부모 요소에서 찾기
+    const parentWithData = button.closest('[data-analysis-added="true"]');
+    if (parentWithData) {
+      companyName = parentWithData.textContent.trim().replace('분석', '').trim();
+      console.log('data-analysis-added에서 찾은 회사명:', companyName);
+    }
+    
+    // 2. 회사명이 있는 일반적인 요소에서 찾기
+    if (!companyName) {
+      const companyElements = document.querySelectorAll('.org-top-card-summary__title, .job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name');
+      for (const element of companyElements) {
+        const text = element.textContent.trim();
+        if (text && !text.includes('분석')) {
+          companyName = text;
+          console.log('일반 요소에서 찾은 회사명:', companyName);
+          break;
+        }
+      }
+    }
+    
+    if (!companyName) {
+      console.log('회사명을 찾을 수 없음');
+      return;
+    }
+    
+    const companyInfoButton = document.createElement('button');
+    companyInfoButton.className = 'linkedin-analyzer-btn';
+    companyInfoButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+      회사 정보
+    `;
 
-  selectors.forEach((selector) => {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach((element) => {
-      if (element.getAttribute('data-analysis-added')) return;
+    companyInfoButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-      const companyName = element.textContent.trim();
-      if (!companyName) return;
+      const companyInfo = {
+        name: companyName,
+        url: window.location.href,
+        description: extractCompanyDescription(),
+        industry: extractIndustryInfo(companyName),
+      };
 
-      const container = findButtonContainer(element);
-      if (!container) return;
-
-      const analysisButton = document.createElement('button');
-      analysisButton.className = 'linkedin-analyzer-btn';
-      analysisButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="16"></line>
-          <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
-        분석
-      `;
-
-      analysisButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const companyInfo = {
-          name: companyName,
-          url: window.location.href,
-          description: extractCompanyDescription(),
-          industry: extractIndustryInfo(companyName),
-        };
-
-        console.log('회사 분석 요청:', companyInfo);
-        showAnalysisCard(companyInfo, e.target);
-      });
-
-      container.appendChild(analysisButton);
-      element.setAttribute('data-analysis-added', 'true');
-      console.log('분석 버튼 추가됨:', companyName);
+      console.log('회사 정보 요청:', companyInfo);
+      showCompanyInfoCard(companyInfo, e.target);
     });
+
+    // 분석 버튼 다음에 회사 정보 버튼 추가
+    button.parentNode.insertBefore(companyInfoButton, button.nextSibling);
+    console.log('회사 정보 버튼 추가됨:', companyName);
   });
 }
 
 // 버튼을 삽입할 컨테이너 요소 찾기
 function findButtonContainer(element) {
-  return element;
+  console.log('컨테이너 찾기 시작:', element.outerHTML);
+  
+  // 1. 부모 요소 중에서 적절한 컨테이너 찾기
+  let container = element.parentElement;
+  while (container) {
+    console.log('검사 중인 컨테이너:', container.outerHTML);
+    
+    // 이미 버튼이 있는 컨테이너인지 확인
+    if (container.querySelector('.linkedin-analyzer-btn')) {
+      console.log('기존 버튼이 있는 컨테이너 발견');
+      return container;
+    }
+    
+    // 적절한 컨테이너인지 확인
+    if (container.classList.contains('org-top-card-summary__title') ||
+        container.classList.contains('job-details-jobs-unified-top-card__company-name') ||
+        container.classList.contains('jobs-unified-top-card__company-name') ||
+        container.classList.contains('entity-result__title-text') ||
+        container.classList.contains('job-card-container') ||
+        container.classList.contains('company-name') ||
+        container.classList.contains('feed-shared-actor__meta') ||
+        container.classList.contains('artdeco-entity-lockup__title') ||
+        container.classList.contains('job-card-container__company-name')) {
+      console.log('적절한 컨테이너 발견');
+      return container;
+    }
+    
+    container = container.parentElement;
+  }
+  
+  // 2. 적절한 컨테이너를 찾지 못한 경우, 새로운 컨테이너 생성
+  console.log('새 컨테이너 생성');
+  const newContainer = document.createElement('div');
+  newContainer.style.display = 'inline-flex';
+  newContainer.style.alignItems = 'center';
+  newContainer.style.gap = '8px';
+  
+  // 원래 요소를 새 컨테이너로 감싸기
+  element.parentNode.insertBefore(newContainer, element);
+  newContainer.appendChild(element);
+  
+  return newContainer;
 }
 
 // 회사 분석 정보 카드 표시
@@ -751,5 +897,93 @@ async function extractProfileInfo() {
   } catch (error) {
     console.error('프로필 정보 추출 중 오류:', error);
     return { success: false, error: error.message };
+  }
+}
+
+// 회사 정보 카드 표시
+function showCompanyInfoCard(companyInfo, targetElement) {
+  const existingCard = document.querySelector('.company-info-card');
+  if (existingCard) existingCard.remove();
+
+  const card = document.createElement('div');
+  card.className = 'company-info-card';
+  card.innerHTML = `
+    <button class="close-btn">×</button>
+    <h2>${companyInfo.name}</h2>
+    <div class="company-details">
+      ${companyInfo.industry ? `<p><strong>산업:</strong> ${companyInfo.industry}</p>` : ''}
+      ${companyInfo.description ? `<p><strong>설명:</strong> ${companyInfo.description}</p>` : ''}
+    </div>
+  `;
+
+  card.querySelector('.close-btn').addEventListener('click', () => card.remove());
+
+  document.body.appendChild(card);
+
+  const buttonRect = targetElement.getBoundingClientRect();
+  card.style.top = `${buttonRect.bottom + window.scrollY}px`;
+  card.style.left = `${buttonRect.left + window.scrollX}px`;
+}
+
+// Glassdoor 정보 추출
+async function extractGlassdoorInfo(companyName) {
+  try {
+    // 회사 평점
+    const ratingElement = document.querySelector('.rating-average');
+    const rating = ratingElement ? parseFloat(ratingElement.textContent) : null;
+
+    // 급여 정보
+    const salaryElement = document.querySelector('.salary-estimate');
+    const salary = salaryElement ? salaryElement.textContent.trim() : null;
+
+    // 리뷰 정보
+    const reviews = [];
+    const reviewElements = document.querySelectorAll('.review-item');
+    reviewElements.forEach(element => {
+      const ratingElement = element.querySelector('.rating');
+      const contentElement = element.querySelector('.review-content');
+      const dateElement = element.querySelector('.review-date');
+      
+      if (ratingElement && contentElement) {
+        reviews.push({
+          rating: parseFloat(ratingElement.textContent),
+          content: contentElement.textContent.trim(),
+          date: dateElement ? dateElement.textContent.trim() : '날짜 없음'
+        });
+      }
+    });
+
+    // 면접 경험
+    const interviews = [];
+    const interviewElements = document.querySelectorAll('.interview-item');
+    interviewElements.forEach(element => {
+      const difficultyElement = element.querySelector('.difficulty-rating');
+      const processElement = element.querySelector('.interview-process');
+      const dateElement = element.querySelector('.interview-date');
+      
+      if (processElement) {
+        interviews.push({
+          difficulty: difficultyElement ? parseFloat(difficultyElement.textContent) : null,
+          process: processElement.textContent.trim(),
+          date: dateElement ? dateElement.textContent.trim() : '날짜 없음'
+        });
+      }
+    });
+
+    return {
+      success: true,
+      glassdoorInfo: {
+        rating,
+        salary,
+        reviews: reviews.slice(0, 5), // 최근 5개 리뷰만
+        interviews: interviews.slice(0, 5) // 최근 5개 면접 경험만
+      }
+    };
+  } catch (error) {
+    console.error('Glassdoor 정보 추출 오류:', error);
+    return {
+      success: false,
+      error: 'Glassdoor 정보를 추출하는 중 오류가 발생했습니다.'
+    };
   }
 }

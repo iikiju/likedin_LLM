@@ -1,9 +1,175 @@
 body {
-  width: 350px;
-  max-height: 500px;
+  font-family: Arial, sans-serif;
   margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  padding: 15px 15px 50px 15px;
+  width: 350px;
+  color: #333;
+  position: relative;
+  min-height: 100vh;
+}
+
+.hidden {
+  display: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.company-analysis-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+}
+
+.company-info h2 {
+  color: #0077b5;
+  margin: 0 0 15px 0;
+  font-size: 18px;
+}
+
+.analysis-section {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.analysis-section h3 {
+  color: #0077b5;
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.analysis-section p {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* 별점 스타일 */
+.star-rating {
+  display: inline-block;
+  margin-top: 5px;
+}
+
+.star {
+  color: #ddd;
+  font-size: 20px;
+  cursor: default;
+  margin-right: 2px;
+}
+
+.star.active {
+  color: #ffd700;
+}
+
+.overall-rating {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f0f7ff;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.overall-rating h3 {
+  color: #0077b5;
+  margin: 0 0 10px 0;
+  font-size: 16px;
+}
+
+.back-button {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 15px;
+  background-color: #0077b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.back-button:hover {
+  background-color: #005582;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 4px solid #0077b5;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 10px;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#loading {
+  text-align: center;
+  padding: 20px;
+}
+
+#loading p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  margin: 0;
+}
+
+#company-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.company-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.company-item:hover {
+  background-color: #f0f7ff;
+}
+
+.company-item .name {
+  font-weight: 500;
+  color: #0077b5;
+}
+
+.analyze-button {
+  padding: 6px 12px;
+  background-color: #0077b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.analyze-button:hover {
+  background-color: #005582;
 }
 
 .container {
@@ -33,15 +199,6 @@ body {
   margin: 16px 0;
   font-size: 14px;
   line-height: 1.5;
-}
-
-.hidden {
-  display: none;
-}
-
-#loading {
-  text-align: center;
-  padding: 20px 0;
 }
 
 /* 결과 섹션 */
@@ -89,7 +246,7 @@ body {
   display: inline-flex;
   align-items: center;
   margin-left: 8px;
-  padding: 4px 8px;
+  padding: 6px 12px;
   color: #fff;
   background-color: #0077b5;
   border: none;
@@ -97,52 +254,30 @@ body {
   font-size: 12px;
   cursor: pointer;
   transition: background-color 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
 .linkedin-analyzer-btn:hover {
-  background-color: #005e93;
+  background-color: #005582;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .linkedin-analyzer-btn svg {
-  margin-right: 4px;
+  margin-right: 6px;
+  width: 14px;
+  height: 14px;
 }
 
-/* 회사 분석 카드 */
-.company-analysis-card {
-  position: absolute;
-  z-index: 9999;
-  width: 300px;
-  max-height: 80vh;
-  overflow-y: auto;
-  padding: 16px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-}
-
-.company-analysis-card h2 {
-  margin: 0 0 16px;
-  padding-right: 24px;
-  font-size: 18px;
-  color: #0077b5;
-}
-
-.analysis-section {
-  margin-bottom: 16px;
-}
-
-.analysis-section h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  color: #333;
-}
-
-.analysis-section p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #666;
+/* 버튼 컨테이너 스타일 */
+.button-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  position: relative;
+  z-index: 1000;
 }
 
 .close-btn {
@@ -160,45 +295,6 @@ body {
 
 .close-btn:hover {
   color: #333;
-}
-
-/* 별점 표시 */
-.stars {
-  margin-bottom: 8px;
-}
-
-.star {
-  font-size: 16px;
-  color: #ccc;
-}
-
-.star.active {
-  color: #fbb72c;
-}
-
-/* 로딩 표시 */
-.analysis-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 0;
-}
-
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(0, 119, 181, 0.3);
-  border-radius: 50%;
-  border-top-color: #0077b5;
-  animation: spin 1s linear infinite;
-  margin-bottom: 12px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Ollama 연결 확인 버튼 */
@@ -251,4 +347,118 @@ body {
   color: #666;
   font-size: 13px;
   margin-left: 10px;
+}
+
+/* 피드백 섹션 스타일 */
+.feedback-section {
+  margin: 10px 0;
+  width: 100%;
+  box-sizing: border-box;
+  display: none;
+}
+
+.feedback-container {
+  background: white;
+  padding: 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#feedback-text {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 13px;
+  box-sizing: border-box;
+  min-height: 80px;
+}
+
+.feedback-button {
+  background-color: #0077b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+}
+
+.feedback-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.feedback-button:hover:not(:disabled) {
+  background-color: #005582;
+}
+
+.feedback-success {
+  color: #4caf50;
+  margin-top: 8px;
+  font-size: 13px;
+  padding: 8px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+}
+
+.feedback-error {
+  color: #f44336;
+  margin-top: 8px;
+  font-size: 13px;
+  padding: 8px;
+  background-color: #ffebee;
+  border-radius: 4px;
+}
+
+/* 회사 정보 카드 스타일 */
+.company-info-card {
+  position: absolute;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  min-width: 300px;
+  max-width: 400px;
+  z-index: 1000;
+}
+
+.company-info-card h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #333;
+}
+
+.company-info-card .close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.company-info-card .close-btn:hover {
+  color: #333;
+}
+
+.company-info-card .company-details {
+  font-size: 14px;
+  color: #666;
+}
+
+.company-info-card .company-details p {
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.company-info-card .company-details strong {
+  color: #333;
+  margin-right: 4px;
 } 

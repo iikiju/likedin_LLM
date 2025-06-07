@@ -1,52 +1,84 @@
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('팝업 로드됨');
   
-  // API 키 관련 이벤트 리스너
-  const saveApiKeyBtn = document.getElementById('save-api-key');
-  const editApiKeyBtn = document.getElementById('edit-api-key');
-  const removeApiKeyBtn = document.getElementById('remove-api-key');
+  // 피드백 토글 버튼 이벤트 리스너
+  const feedbackToggle = document.getElementById('feedback-toggle');
+  const feedbackForm = document.getElementById('feedback-form');
+  const feedbackText = document.getElementById('feedback-text');
+  const feedbackSubmit = document.getElementById('feedback-submit');
+
+  console.log('피드백 요소 확인:', {
+    feedbackToggle: feedbackToggle,
+    feedbackForm: feedbackForm,
+    feedbackText: feedbackText,
+    feedbackSubmit: feedbackSubmit
+  });
+
+  if (feedbackToggle && feedbackForm && feedbackText && feedbackSubmit) {
+    feedbackToggle.addEventListener('click', function() {
+      console.log('Feedback button clicked');
+      feedbackForm.style.display = 'block';
+      feedbackText.focus();
+    });
+
+    feedbackText.addEventListener('input', function() {
+      feedbackSubmit.disabled = !this.value.trim();
+    });
+
+    feedbackSubmit.addEventListener('click', async function() {
+      await handleFeedbackSubmit();
+      feedbackForm.style.display = 'none';
+    });
+  } else {
+    console.error('피드백 관련 요소를 찾을 수 없습니다');
+  }
   
+  // 초기 API 키 로드
+  loadApiKey();
+  
+  // API 키 저장 버튼
+  const saveApiKeyBtn = document.getElementById('saveApiKey');
   if (saveApiKeyBtn) {
+    console.log('API 키 저장 버튼 찾음');
     saveApiKeyBtn.addEventListener('click', () => {
       console.log('API 키 저장 버튼 클릭됨');
       const apiKey = document.getElementById('openai-api-key').value.trim();
-      if (!apiKey) {
-        showError('API 키를 입력해주세요.');
-        return;
+      console.log('입력된 API 키:', apiKey);
+      if (apiKey) {
+        console.log('API 키 저장 시도');
+        // API 키 유효성 검사
+        if (!apiKey.startsWith('sk-')) {
+          alert('올바른 OpenAI API 키 형식이 아닙니다. API 키는 "sk-"로 시작해야 합니다.');
+          return;
+        }
+        saveApiKey(apiKey);
+      } else {
+        console.log('API 키가 비어있음');
+        alert('API 키를 입력해주세요.');
       }
-      
-      chrome.storage.local.set({ 'openaiApiKey': apiKey }, () => {
-        console.log('API 키 저장됨');
-        document.getElementById('api-key-form').style.display = 'none';
-        document.getElementById('api-key-status').style.display = 'block';
-        showStatus('API 키가 저장되었습니다.');
-      });
     });
+  } else {
+    console.error('API 키 저장 버튼을 찾을 수 없음');
   }
 
+  // API 키 수정 버튼
+  const editApiKeyBtn = document.getElementById('edit-api-key');
   if (editApiKeyBtn) {
     editApiKeyBtn.addEventListener('click', () => {
       console.log('API 키 수정 버튼 클릭됨');
-      document.getElementById('api-key-form').style.display = 'block';
       document.getElementById('api-key-status').style.display = 'none';
-      document.getElementById('openai-api-key').focus();
+      document.getElementById('api-key-section').style.display = 'block';
     });
   }
 
+  // API 키 삭제 버튼
+  const removeApiKeyBtn = document.getElementById('remove-api-key');
   if (removeApiKeyBtn) {
     removeApiKeyBtn.addEventListener('click', () => {
-      console.log('API 키 제거 버튼 클릭됨');
-      chrome.storage.local.remove('openaiApiKey', () => {
-        document.getElementById('openai-api-key').value = '';
-        document.getElementById('api-key-form').style.display = 'block';
-        document.getElementById('api-key-status').style.display = 'none';
-        showStatus('API 키가 제거되었습니다.');
-      });
+      console.log('API 키 삭제 버튼 클릭됨');
+      removeApiKey();
     });
   }
-
-  // 저장된 API 키 불러오기
-  loadApiKey();
   
   // 도구 버튼 이벤트 리스너 추가
   document.getElementById('check-ollama').addEventListener('click', checkOllamaConnection);
@@ -376,10 +408,162 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // API 키 상태 확인
-    checkApiKeyStatus();
+    checkApiConnection();
   } catch (error) {
     console.error('초기화 오류:', error);
     showError('초기화 중 오류가 발생했습니다.');
+  }
+
+  // 피드백 관련 함수들
+  function showFeedbackSuccess(message) {
+    const feedbackSection = document.querySelector('.feedback-section');
+    if (!feedbackSection) {
+      console.error('피드백 섹션을 찾을 수 없습니다.');
+      return;
+    }
+
+    const successMessage = document.createElement('div');
+    successMessage.className = 'feedback-success';
+    successMessage.textContent = message;
+    
+    // 기존 메시지 제거
+    const existingMessage = feedbackSection.querySelector('.feedback-success, .feedback-error');
+    if (existingMessage) {
+      existingMessage.remove();
+    }
+    
+    feedbackSection.appendChild(successMessage);
+    
+    // 3초 후 메시지 제거
+    setTimeout(() => {
+      successMessage.remove();
+    }, 3000);
+  }
+
+  function showFeedbackError(message) {
+    const feedbackSection = document.querySelector('.feedback-section');
+    if (!feedbackSection) {
+      console.error('피드백 섹션을 찾을 수 없습니다.');
+      return;
+    }
+
+    const errorMessage = document.createElement('div');
+    errorMessage.className = 'feedback-error';
+    errorMessage.textContent = message;
+    
+    // 기존 메시지 제거
+    const existingMessage = feedbackSection.querySelector('.feedback-success, .feedback-error');
+    if (existingMessage) {
+      existingMessage.remove();
+    }
+    
+    feedbackSection.appendChild(errorMessage);
+    
+    // 3초 후 메시지 제거
+    setTimeout(() => {
+      errorMessage.remove();
+    }, 3000);
+  }
+
+  async function handleFeedbackSubmit() {
+    const feedbackText = document.getElementById('feedback-text');
+    const submitButton = document.getElementById('feedback-submit');
+    const feedback = feedbackText.value.trim();
+    
+    if (!feedback) {
+      showFeedbackError('피드백을 입력해주세요.');
+      return;
+    }
+    
+    try {
+      submitButton.disabled = true;
+      
+      // 현재 분석 결과 가져오기
+      const currentAnalysis = await getCurrentAnalysis();
+      
+      // 피드백 데이터 구성
+      const feedbackData = {
+        timestamp: new Date().toISOString(),
+        feedback: feedback,
+        companyName: currentAnalysis?.name || 'Unknown',
+        analysis: currentAnalysis || null
+      };
+      
+      // 피드백 저장
+      await saveFeedback(feedbackData);
+      
+      // 성공 메시지 표시
+      showFeedbackSuccess('피드백이 저장되었습니다. 감사합니다!');
+      
+      // 입력 필드 초기화
+      feedbackText.value = '';
+      submitButton.disabled = true;
+      
+      // 피드백 폼 숨기기
+      const feedbackForm = document.getElementById('feedback-form');
+      feedbackForm.style.display = 'none';
+      
+    } catch (error) {
+      console.error('피드백 저장 오류:', error);
+      showFeedbackError('피드백 저장에 실패했습니다. 다시 시도해주세요.');
+      submitButton.disabled = false;
+    }
+  }
+
+  async function getCurrentAnalysis() {
+    // 현재 표시된 분석 결과 가져오기
+    const resultContainer = document.getElementById('analysis-result');
+    if (!resultContainer || !resultContainer.innerHTML) {
+      return null;
+    }
+    
+    // 분석 결과 데이터 추출
+    const companyName = resultContainer.querySelector('#company-name')?.textContent;
+    const salary = resultContainer.querySelector('#salary-info')?.textContent;
+    const benefits = resultContainer.querySelector('#benefits-info')?.textContent;
+    const jobFit = resultContainer.querySelector('#job-fit-info')?.textContent;
+    const summary = resultContainer.querySelector('#rating-text')?.textContent;
+    
+    return {
+      name: companyName,
+      salary,
+      benefits,
+      jobFit,
+      summary
+    };
+  }
+
+  async function saveFeedback(feedbackData) {
+    try {
+      // 피드백 텍스트 파일에 추가
+      const feedbackText = `
+=== Feedback (${feedbackData.timestamp}) ===
+Company: ${feedbackData.companyName}
+Feedback: ${feedbackData.feedback}
+Analysis Summary: ${feedbackData.analysis?.summary || 'N/A'}
+----------------------------------------
+`;
+
+      // 백그라운드 스크립트에 피드백 저장 요청
+      chrome.runtime.sendMessage(
+        { 
+          action: 'saveFeedback',
+          feedback: feedbackText
+        },
+        (response) => {
+          if (response && response.success) {
+            console.log('피드백 저장 성공');
+          } else {
+            console.error('피드백 저장 실패:', response?.error);
+            throw new Error(response?.error || '피드백 저장 실패');
+          }
+        }
+      );
+      
+    } catch (error) {
+      console.error('피드백 저장 오류:', error);
+      throw error;
+    }
   }
 });
 
@@ -458,19 +642,43 @@ function showCompanyList(companies, tabId) {
     
     // 분석 버튼
     const analyzeButton = document.createElement('button');
-    analyzeButton.textContent = '분석';
+    analyzeButton.textContent = 'Analyze';
     analyzeButton.style.backgroundColor = '#0077b5';
     analyzeButton.style.color = 'white';
     analyzeButton.style.border = 'none';
     analyzeButton.style.borderRadius = '4px';
-    analyzeButton.style.padding = '4px 8px';
+    analyzeButton.style.padding = '6px 12px';
     analyzeButton.style.fontSize = '12px';
     analyzeButton.style.cursor = 'pointer';
+    analyzeButton.style.minWidth = '70px';
+    analyzeButton.style.height = '28px';
+    analyzeButton.style.display = 'inline-flex';
+    analyzeButton.style.alignItems = 'center';
+    analyzeButton.style.justifyContent = 'center';
+    
+    // 회사 정보 버튼
+    const companyInfoButton = document.createElement('button');
+    companyInfoButton.textContent = 'Info';
+    companyInfoButton.style.backgroundColor = '#0077b5';
+    companyInfoButton.style.color = 'white';
+    companyInfoButton.style.border = 'none';
+    companyInfoButton.style.borderRadius = '4px';
+    companyInfoButton.style.padding = '6px 12px';
+    companyInfoButton.style.fontSize = '12px';
+    companyInfoButton.style.cursor = 'pointer';
+    companyInfoButton.style.marginLeft = '8px';
+    companyInfoButton.style.minWidth = '70px';
+    companyInfoButton.style.height = '28px';
+    companyInfoButton.style.display = 'inline-flex';
+    companyInfoButton.style.alignItems = 'center';
+    companyInfoButton.style.justifyContent = 'center';
     
     // 버튼 컨테이너
     const buttonContainer = document.createElement('div');
     buttonContainer.style.display = 'flex';
+    buttonContainer.style.alignItems = 'center';
     buttonContainer.appendChild(analyzeButton);
+    buttonContainer.appendChild(companyInfoButton);
     
     // 분석 버튼 클릭 이벤트
     analyzeButton.addEventListener('click', () => {
@@ -487,6 +695,31 @@ function showCompanyList(companies, tabId) {
             analyzeCompany(response.companyInfo);
           } else {
             showError('회사 정보를 찾을 수 없습니다.');
+          }
+        }
+      );
+    });
+
+    // 회사 정보 버튼 클릭 이벤트
+    companyInfoButton.addEventListener('click', () => {
+      console.log('Info 버튼 클릭됨:', company.name);
+      showLoading();
+      
+      // LLM을 통해 회사 정보 생성 요청
+      chrome.runtime.sendMessage(
+        {
+          action: 'generateCompanyInfo',
+          companyName: company.name,
+          existingInfo: company
+        },
+        (response) => {
+          console.log('LLM 회사 정보 응답:', response);
+          if (response && response.success) {
+            console.log('LLM 생성 정보:', response.data);
+            showCompanyInfo({ success: true, companyInfo: response.data });
+          } else {
+            console.error('LLM 정보 생성 실패:', response);
+            showError(response?.error || '회사 정보를 생성할 수 없습니다.');
           }
         }
       );
@@ -588,50 +821,81 @@ function showLoading() {
 
 // 분석 결과 표시
 function showAnalysisResult(data) {
-  console.log('분석 결과 표시:', data);
-  document.getElementById('company-info').classList.add('hidden');
-  document.getElementById('loading').classList.add('hidden');
-  document.getElementById('error-container').classList.add('hidden');
-  
   const resultContainer = document.getElementById('analysis-result');
-  resultContainer.classList.remove('hidden');
-  
-  // 회사 정보 업데이트
-  document.getElementById('company-name').textContent = data.name;
-  document.getElementById('salary-info').textContent = data.salary || '정보 없음';
-  document.getElementById('benefits-info').textContent = data.benefits || '정보 없음';
-  document.getElementById('job-fit-info').textContent = data.jobFit || '정보 없음';
-  document.getElementById('rating-text').textContent = data.summary || '정보 없음';
-  
-  // 별점 업데이트
-  updateStars(data.rating || 0);
-  
-  // "돌아가기" 버튼 추가
-  if (!document.querySelector('.back-to-list-btn')) {
-    const backBtn = document.createElement('button');
-    backBtn.textContent = 'back to list';
-    backBtn.className = 'back-to-list-btn';
-    backBtn.style.marginTop = '12px';
-    
-    backBtn.addEventListener('click', () => {
-      // 현재 탭에서 다시 회사 정보 요청
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.tabs.sendMessage(
-          tabs[0].id, 
-          { action: 'checkCompanyInfo' },
-          (response) => {
-            if (response && response.companiesInfo) {
-              showCompanyList(response.companiesInfo, tabs[0].id);
-            } else {
-              showStatus('Company info not found.');
-            }
-          }
-        );
-      });
-    });
-    
-    resultContainer.appendChild(backBtn);
+  if (!resultContainer) {
+    console.error('Analysis result container not found');
+    return;
   }
+
+  // 로딩 표시 숨기기
+  const loadingElement = document.getElementById('loading');
+  if (loadingElement) {
+    loadingElement.classList.add('hidden');
+  }
+
+  // 각 섹션의 별점 가져오기
+  const salaryRating = data.salaryRating || 0;
+  const benefitsRating = data.benefitsRating || 0;
+  const jobFitRating = data.jobFitRating || 0;
+  const overallRating = data.rating || 0;
+
+  resultContainer.innerHTML = `
+    <h3 id="company-name">${data.name}</h3>
+    
+    <div class="section">
+      <div class="section-title">Overall Rating:</div>
+      <div class="star-rating" data-rating="${overallRating}">
+        ${generateStars(overallRating)}
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Salary and Compensation:</div>
+      <div id="salary-info">${data.salary}</div>
+      <div class="star-rating" data-rating="${salaryRating}">
+        ${generateStars(salaryRating)}
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Benefits:</div>
+      <div id="benefits-info">${data.benefits}</div>
+      <div class="star-rating" data-rating="${benefitsRating}">
+        ${generateStars(benefitsRating)}
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Job Fit:</div>
+      <div id="job-fit-info">${data.jobFit}</div>
+      <div class="star-rating" data-rating="${jobFitRating}">
+        ${generateStars(jobFitRating)}
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Summary:</div>
+      <div id="rating-text">${data.summary}</div>
+    </div>
+  `;
+
+  resultContainer.classList.remove('hidden');
+}
+
+// 별점 HTML 생성 함수 수정
+function generateStars(rating) {
+  rating = parseFloat(rating) || 0;
+  let starsHtml = '';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= Math.floor(rating)) {
+      starsHtml += '<span class="star active">★</span>';
+    } else if (i === Math.ceil(rating) && rating % 1 >= 0.5) {
+      starsHtml += '<span class="star active">★</span>';
+    } else {
+      starsHtml += '<span class="star">☆</span>';
+    }
+  }
+  return starsHtml;
 }
 
 // 별점 표시 업데이트
@@ -882,21 +1146,137 @@ function updatePromptButtonStyles(activeProfile) {
   }
 }
 
-// 저장된 API 키 불러오기
+// 커스텀 프로필 데이터 로드
+async function loadCustomProfileData() {
+  console.log('커스텀 프로필 데이터 로드 시도');
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get('customProfile', (result) => {
+      if (chrome.runtime.lastError) {
+        console.error('커스텀 프로필 로드 오류:', chrome.runtime.lastError);
+        reject(chrome.runtime.lastError);
+        return;
+      }
+      console.log('커스텀 프로필 데이터:', result.customProfile);
+      resolve(result.customProfile || null);
+    });
+  });
+}
+
+// API 키 관련 함수들
 function loadApiKey() {
-  console.log('API 키 로드 시도');
-  chrome.storage.local.get('openaiApiKey', (data) => {
-    if (data.openaiApiKey) {
-      console.log('저장된 API 키 발견');
-      document.getElementById('openai-api-key').value = data.openaiApiKey;
-      document.getElementById('api-key-form').style.display = 'none';
-      document.getElementById('api-key-status').style.display = 'block';
+  console.log('API 키 로드 시작');
+  chrome.storage.local.get(['openaiApiKey'], (result) => {
+    console.log('저장된 API 키:', result.openaiApiKey ? '있음' : '없음');
+    const apiKeyInput = document.getElementById('openai-api-key');
+    if (result.openaiApiKey) {
+      apiKeyInput.value = result.openaiApiKey;
+      document.getElementById('api-key-status').textContent = 'API 키가 저장되어 있습니다.';
+      document.getElementById('save-api-key').style.display = 'none';
+      document.getElementById('edit-api-key').style.display = 'inline-block';
+      document.getElementById('remove-api-key').style.display = 'inline-block';
+      
+      // API 키 유효성 검사
+      checkApiConnection();
     } else {
-      console.log('저장된 API 키 없음');
-      document.getElementById('api-key-form').style.display = 'block';
-      document.getElementById('api-key-status').style.display = 'none';
+      apiKeyInput.value = '';
+      document.getElementById('api-key-status').textContent = 'API 키가 설정되지 않았습니다.';
+      document.getElementById('save-api-key').style.display = 'inline-block';
+      document.getElementById('edit-api-key').style.display = 'none';
+      document.getElementById('remove-api-key').style.display = 'none';
     }
   });
+}
+
+function saveApiKey(apiKey) {
+  const apiKeyInput = document.getElementById('openai-api-key');
+  if (!apiKey) {
+    showError('API 키를 입력해주세요.');
+    return;
+  }
+
+  // API 키 형식 검증
+  if (!apiKey.startsWith('sk-')) {
+    showError('올바른 OpenAI API 키 형식이 아닙니다.');
+    return;
+  }
+
+  chrome.storage.local.set({ 'openaiApiKey': apiKey }, () => {
+    if (chrome.runtime.lastError) {
+      console.error('API 키 저장 실패:', chrome.runtime.lastError);
+      showError('API 키 저장에 실패했습니다.');
+      return;
+    }
+    
+    console.log('API 키 저장 완료');
+    document.getElementById('api-key-status').textContent = 'API 키가 저장되었습니다.';
+    document.getElementById('save-api-key').style.display = 'none';
+    document.getElementById('edit-api-key').style.display = 'inline-block';
+    document.getElementById('remove-api-key').style.display = 'inline-block';
+    showStatus('API 키가 저장되었습니다.');
+    
+    // API 키 유효성 검사
+    checkApiConnection();
+  });
+}
+
+function removeApiKey() {
+  chrome.storage.local.remove(['openaiApiKey'], () => {
+    document.getElementById('openai-api-key').value = '';
+    document.getElementById('api-key-status').textContent = 'API 키가 설정되지 않았습니다.';
+    document.getElementById('save-api-key').style.display = 'inline-block';
+    document.getElementById('edit-api-key').style.display = 'none';
+    document.getElementById('remove-api-key').style.display = 'none';
+    showStatus('API 키가 삭제되었습니다.');
+  });
+}
+
+// API 연결 확인 함수
+async function checkApiConnection() {
+  console.log('API 연결 확인 시작');
+  showStatus('OpenAI API Connection Checking...');
+  
+  try {
+    const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
+    if (!openaiApiKey) {
+      console.error('API 키가 없음');
+      showError('OpenAI API 키가 설정되지 않았습니다.');
+      return;
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          {
+            role: 'system',
+            content: 'test'
+          },
+          {
+            role: 'user',
+            content: 'test'
+          }
+        ],
+        max_tokens: 5
+      })
+    });
+
+    if (response.ok) {
+      console.log('API 연결 성공');
+      showStatus('OpenAI API 연결 성공! 분석 준비가 완료되었습니다.');
+    } else {
+      const error = await response.json();
+      console.error('API 연결 실패:', error);
+      showError(`OpenAI API 연결 실패: ${error.error?.message || '알 수 없는 오류'}`);
+    }
+  } catch (error) {
+    console.error('API 연결 확인 중 오류:', error);
+    showError(`OpenAI API 연결 실패: ${error.message}`);
+  }
 }
 
 function displayProfileInfo(profileInfo) {
@@ -1050,4 +1430,96 @@ function hidePersonaInfo() {
   btn.addEventListener('mouseleave', function() {
     hidePersonaInfo();
   });
-}); 
+});
+
+// 회사 정보 표시
+function showCompanyInfo(companyInfo) {
+  console.log('회사 정보 표시 시작:', companyInfo);
+  
+  // 로딩 화면 숨기기
+  document.getElementById('loading').classList.add('hidden');
+  
+  // 에러 처리
+  if (!companyInfo || !companyInfo.success) {
+    console.error('회사 정보 표시 실패:', companyInfo);
+    showError(companyInfo?.error || '회사 정보를 가져올 수 없습니다.');
+    return;
+  }
+  
+  const companyInfoElement = document.getElementById('company-info');
+  companyInfoElement.classList.remove('hidden');
+  
+  // 실제 회사 정보 데이터 사용
+  const data = companyInfo.companyInfo || companyInfo;
+  
+  companyInfoElement.innerHTML = `
+    <div class="company-info-card">
+      <h3>${data.name}</h3>
+      
+      <div class="company-basic-info">
+        ${data.industry ? `<p><strong>산업:</strong> ${data.industry}</p>` : ''}
+        ${data.size ? `<p><strong>회사 규모:</strong> ${data.size}</p>` : ''}
+        ${data.founded ? `<p><strong>설립일:</strong> ${data.founded}</p>` : ''}
+        ${data.headquarters ? `<p><strong>본사 위치:</strong> ${data.headquarters}</p>` : ''}
+        ${data.followers ? `<p><strong>팔로워:</strong> ${data.followers}</p>` : ''}
+        ${data.website ? `<p><strong>웹사이트:</strong> <a href="${data.website}" target="_blank">${data.website}</a></p>` : ''}
+      </div>
+
+      ${data.description ? `
+        <div class="company-description">
+          <h4>회사 소개</h4>
+          <p>${data.description}</p>
+        </div>
+      ` : ''}
+
+      ${data.specialties && data.specialties.length > 0 ? `
+        <div class="company-specialties">
+          <h4>전문 분야</h4>
+          <ul>
+            ${data.specialties.map(specialty => `<li>${specialty}</li>`).join('')}
+          </ul>
+        </div>
+      ` : ''}
+
+      ${data.employees && data.employees.length > 0 ? `
+        <div class="company-employees">
+          <h4>주요 직원</h4>
+          <div class="employee-list">
+            ${data.employees.map(employee => `
+              <div class="employee-card">
+                ${employee.image ? `<img src="${employee.image}" alt="${employee.name}" class="employee-image">` : ''}
+                <div class="employee-info">
+                  <div class="employee-name">${employee.name}</div>
+                  <div class="employee-title">${employee.title}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <button class="back-to-list-btn">목록으로 돌아가기</button>
+    </div>
+  `;
+  
+  // 목록으로 돌아가기 버튼 이벤트
+  const backButton = companyInfoElement.querySelector('.back-to-list-btn');
+  backButton.addEventListener('click', () => {
+    // 현재 탭 ID 가져오기
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const currentTab = tabs[0];
+      if (currentTab) {
+        // 회사 목록 다시 요청
+        chrome.tabs.sendMessage(
+          currentTab.id,
+          { action: 'checkCompanyInfo' },
+          (response) => {
+            if (response && response.companiesInfo) {
+              showCompanyList(response.companiesInfo, currentTab.id);
+            }
+          }
+        );
+      }
+    });
+  });
+} 
