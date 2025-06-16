@@ -346,13 +346,18 @@ function parseLLMResponse(text) {
     overallRating = (salaryRating + benefitsRating + jobFitRating + cultureRating) / 4;
   }
 
+  // Remove numerical ratings from the text
+  const cleanText = (text) => {
+    return text.replace(/Rating: \d+\/5/g, '').trim();
+  };
+
   return {
     name: text.match(/Company:\s*([^\n]+)/)?.[1] || 'Unknown Company',
-    salary: salaryMatch ? salaryMatch[1].trim() : '',
-    benefits: benefitsMatch ? benefitsMatch[1].trim() : '',
-    jobFit: jobFitMatch ? jobFitMatch[1].trim() : '',
-    culture: cultureMatch ? cultureMatch[1].trim() : '',
-    summary: summaryMatch ? summaryMatch[1].trim() : '',
+    salary: cleanText(salaryMatch ? salaryMatch[1] : ''),
+    benefits: cleanText(benefitsMatch ? benefitsMatch[1] : ''),
+    jobFit: cleanText(jobFitMatch ? jobFitMatch[1] : ''),
+    culture: cleanText(cultureMatch ? cultureMatch[1] : ''),
+    summary: cleanText(summaryMatch ? summaryMatch[1] : ''),
     salaryRating,
     benefitsRating,
     jobFitRating,

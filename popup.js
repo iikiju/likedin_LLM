@@ -565,6 +565,17 @@ Analysis Summary: ${feedbackData.analysis?.summary || 'N/A'}
       throw error;
     }
   }
+
+  // API 섹션 토글 기능
+  const toggleApiSection = document.getElementById('toggle-api-section');
+  const apiKeyContent = document.getElementById('api-key-content');
+  
+  if (toggleApiSection && apiKeyContent) {
+    toggleApiSection.addEventListener('click', () => {
+      apiKeyContent.classList.toggle('collapsed');
+      toggleApiSection.textContent = apiKeyContent.classList.contains('collapsed') ? '+' : '-';
+    });
+  }
 });
 
 // 회사 목록 표시
@@ -886,10 +897,10 @@ function showAnalysisResult(data) {
 function generateStars(rating) {
   rating = parseFloat(rating) || 0;
   let starsHtml = '';
+  const flooredRating = Math.floor(rating); // 소수점 이하 내림
+  
   for (let i = 1; i <= 5; i++) {
-    if (i <= Math.floor(rating)) {
-      starsHtml += '<span class="star active">★</span>';
-    } else if (i === Math.ceil(rating) && rating % 1 >= 0.5) {
+    if (i <= flooredRating) {
       starsHtml += '<span class="star active">★</span>';
     } else {
       starsHtml += '<span class="star">☆</span>';
