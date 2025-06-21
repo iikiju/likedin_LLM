@@ -2,7 +2,8 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>LinkedIn Company Analysis</title>
+  <title>LinkedIn Company Analysis v1.4</title>
+  <link rel="stylesheet" href="styles.css">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -10,6 +11,8 @@
       padding: 15px;
       width: 350px;
       color: #333;
+      position: relative;
+      box-sizing: border-box;
     }
     h2 {
       color: #0077b5;
@@ -18,6 +21,9 @@
     }
     .section {
       margin-bottom: 15px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
     }
     .section-title {
       font-weight: bold;
@@ -26,8 +32,8 @@
     }
     .stars {
       color: #ccc;
-      font-size: 20px;
-      margin-bottom: 10px;
+      font-size: 16px;
+      margin: 5px 0;
     }
     .star {
       display: inline-block;
@@ -129,16 +135,426 @@
       background-color: #f44336;
       color: white;
     }
+    /* API 키 입력 폼 스타일 */
+    .api-key-form {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .api-key-form input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .api-key-form button {
+      width: 100%;
+      padding: 8px;
+      background-color: #0077b5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .api-key-form button:hover {
+      background-color: #005582;
+    }
+    .api-key-status {
+      background-color: #e8f4f8;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .api-key-status-text {
+      margin-bottom: 8px;
+      color: #0077b5;
+      font-weight: bold;
+    }
+    .api-key-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .api-key-actions button {
+      flex: 1;
+      padding: 6px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #edit-api-key {
+      background-color: #0077b5;
+      color: white;
+    }
+    #remove-api-key {
+      background-color: #dc3545;
+      color: white;
+    }
+    #edit-api-key:hover {
+      background-color: #005582;
+    }
+    #remove-api-key:hover {
+      background-color: #c82333;
+    }
+    .load-profile-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 16px;
+      margin-bottom: 16px;
+      background-color: #0a66c2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    
+    .load-profile-btn:hover {
+      background-color: #004182;
+    }
+    
+    .load-profile-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .load-profile-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .loading-container {
+      text-align: center;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    
+    .loading-container .spinner {
+      margin: 0 auto 10px;
+    }
+    
+    .loading-container p {
+      color: #666;
+      margin: 0;
+      font-size: 14px;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.95);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .loading-overlay.active {
+      display: flex;
+    }
+    
+    .loading-overlay .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0a66c2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    
+    .loading-overlay p {
+      color: #0a66c2;
+      font-size: 16px;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    /* 토글 버튼 스타일 */
+    .profile-sections {
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .section-toggle {
+      margin-bottom: 8px;
+    }
+    
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .toggle-label input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    
+    .toggle-text {
+      font-size: 13px;
+      color: #333;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 입력 필드와 토글 버튼 스타일 */
+    .input-with-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-with-toggle input[type="text"],
+    .input-with-toggle input[type="number"],
+    .input-with-toggle select {
+      flex: 1;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .toggle-text {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .icon-button {
+      padding: 4px !important;
+      width: 24px !important;
+      height: 24px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    
+    .icon-button svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .icon-button:hover {
+      background-color: #005582 !important;
+    }
+
+    .profile-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .profile-button {
+      flex: 1;
+      padding: 8px;
+      background-color: #0077b5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background-color 0.2s;
+    }
+    
+    .profile-button:hover {
+      background-color: #005582;
+    }
+    
+    .profile-button.active {
+      background-color: #4caf50;
+    }
+
+    /* 피드백 폼 스타일 */
+    .feedback-section {
+      margin: 10px 0;
+      width: 100%;
+      box-sizing: border-box;
+      display: none;
+    }
+
+    .feedback-container {
+      background: white;
+      padding: 15px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #feedback-text {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+      font-size: 13px;
+      box-sizing: border-box;
+      min-height: 80px;
+    }
+
+    .feedback-button {
+      background-color: #0077b5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    .feedback-button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .feedback-button:hover:not(:disabled) {
+      background-color: #005582;
+    }
+
+    .feedback-success {
+      color: #4caf50;
+      margin-top: 8px;
+      font-size: 13px;
+      padding: 8px;
+      background-color: #e8f5e9;
+      border-radius: 4px;
+    }
+
+    .feedback-error {
+      color: #f44336;
+      margin-top: 8px;
+      font-size: 13px;
+      padding: 8px;
+      background-color: #ffebee;
+      border-radius: 4px;
+    }
+
+    .api-key-section {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .api-key-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .api-key-header h3 {
+      margin: 0;
+    }
+    .toggle-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 5px;
+      color: #666;
+    }
+    .toggle-btn:hover {
+      color: #333;
+    }
+    #api-key-content {
+      transition: max-height 0.3s ease-out;
+      overflow: hidden;
+    }
+    #api-key-content.collapsed {
+      max-height: 0;
+      padding: 0;
+      margin: 0;
+    }
+    .api-key-section input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 5px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
-  <h2>LinkedIn Company Analysis</h2>
+  <h2>LinkedIn Company Analysis 1.4</h2>
   
+  <!-- API 키 설정 섹션 -->
+  <div id="api-key-section" class="api-key-section">
+    <div class="api-key-header">
+      <h3>OpenAI API 키 설정</h3>
+      <button id="toggle-api-section" class="toggle-btn">-</button>
+    </div>
+    <div id="api-key-content">
+      <input type="password" id="openai-api-key" placeholder="OpenAI API 키를 입력하세요">
+      <button id="saveApiKey">API 키 저장</button>
+    </div>
+  </div>
+  
+  <!-- 프로필 선택 버튼 -->
+  <div class="profile-buttons">
+    <button id="use-js-prompt" class="profile-button">JS Profile</button>
+    <button id="use-sm-prompt" class="profile-button">SM Profile</button>
+    <button id="custom-profile-btn" class="profile-button">Custom Profile</button>
+  </div>
+
   <div class="tool-buttons">
     <button id="check-ollama" class="tool-button">LLM-Test</button>
-    <button id="use-js-prompt" class="tool-button">JS-Profile</button>
-    <button id="use-sm-prompt" class="tool-button">SM-Profile</button>
-    <button id="custom-profile-btn" class="tool-button">Custom</button>
+    <button id="feedback-toggle" class="tool-button">💬 피드백 작성</button>
+  </div>
+
+  <!-- 피드백 폼 -->
+  <div id="feedback-form" class="feedback-section">
+    <div class="feedback-container">
+      <textarea id="feedback-text" placeholder="피드백을 입력해주세요..." rows="4"></textarea>
+      <button id="feedback-submit" class="feedback-button" disabled>제출</button>
+    </div>
+  </div>
+  
+  <!-- 프로필 정보 팝업 -->
+  <div id="profile-info-popup" class="hidden" style="background:#f5f5f5;border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:#333;"></div>
+  
+  <!-- 로딩 오버레이 -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>프로필 정보를 가져오는 중...</p>
+  </div>
+  
+  <!-- API 키 상태 표시 -->
+  <div id="api-key-status" class="api-key-status" style="display: none;">
+    <div class="api-key-status-text">API Key is set</div>
+    <div class="api-key-actions">
+      <button id="edit-api-key">Edit</button>
+      <button id="remove-api-key">Remove</button>
+    </div>
   </div>
   
   <div id="error-container" class="error-message hidden"></div>
@@ -146,45 +562,106 @@
   <!-- 커스텀 프로필 입력 폼 -->
   <div id="custom-profile-form" class="custom-profile-form hidden">
     <h3 style="margin-top:0;font-size:14px;">Custom Profile</h3>
-    <div class="form-group">
-      <label for="custom-name">이름:</label>
-      <input type="text" id="custom-name" placeholder="예: 홍길동">
+    <div id="profile-loading" class="loading-container" style="display: none;">
+      <div class="spinner"></div>
+      <p>프로필 정보를 가져오는 중...</p>
     </div>
-    <div class="form-group">
-      <label for="custom-age">나이:</label>
-      <input type="number" id="custom-age" placeholder="예: 28">
-    </div>
-    <div class="form-group">
-      <label for="custom-location">거주지:</label>
-      <input type="text" id="custom-location" placeholder="예: 서울">
-    </div>
-    <div class="form-group">
-      <label for="custom-major">전공:</label>
-      <input type="text" id="custom-major" placeholder="예: 컴퓨터 공학">
-    </div>
-    <div class="form-group">
-      <label for="custom-field">희망 분야:</label>
-      <input type="text" id="custom-field" placeholder="예: 웹 개발">
-    </div>
-    <div class="form-group">
-      <label for="custom-salary">희망 연봉(만원):</label>
-      <input type="number" id="custom-salary" placeholder="예: 5000">
-    </div>
-    <div class="form-group">
-      <label for="custom-worktype">근무 형태:</label>
-      <select id="custom-worktype">
-        <option value="full">풀타임</option>
-        <option value="part">파트타임</option>
-        <option value="freelance">프리랜서</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="custom-skills">보유 기술:</label>
-      <input type="text" id="custom-skills" placeholder="예: JavaScript, Python, SQL">
-    </div>
-    <div class="form-actions">
-      <button id="cancel-profile" class="cancel-btn">취소</button>
-      <button id="save-profile" class="save-btn">저장</button>
+    <div id="profile-content">
+      <div class="form-group">
+        <label for="linkedin-profile-url">LinkedIn 프로필 URL:</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="linkedin-profile-url" placeholder="https://www.linkedin.com/in/username" style="flex: 1;">
+          <button id="load-profile-url-btn" class="load-profile-btn" style="width: auto; margin: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            가져오기
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="custom-name">이름:</label>
+        <div class="input-with-toggle">
+          <input type="text" id="custom-name" placeholder="예: 홍길동">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-name" checked>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="custom-age">나이:</label>
+        <div class="input-with-toggle">
+          <input type="number" id="custom-age" placeholder="예: 28">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-age" checked>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="custom-location">거주지:</label>
+        <div class="input-with-toggle">
+          <input type="text" id="custom-location" placeholder="예: 서울">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-location" checked>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="custom-major">전공:</label>
+        <div class="input-with-toggle">
+          <input type="text" id="custom-major" placeholder="예: 컴퓨터 공학">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-major" checked>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="custom-field">희망 분야:</label>
+        <div class="input-with-toggle">
+          <input type="text" id="custom-field" placeholder="예: 웹 개발">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-field" checked>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="custom-salary">희망 연봉(만원):</label>
+        <div class="input-with-toggle">
+          <input type="number" id="custom-salary" placeholder="예: 5000">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-salary" checked>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="custom-worktype">근무 형태:</label>
+        <div class="input-with-toggle">
+          <select id="custom-worktype">
+            <option value="full">풀타임</option>
+            <option value="part">파트타임</option>
+            <option value="freelance">프리랜서</option>
+          </select>
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-worktype" checked>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="custom-skills">보유 기술:</label>
+        <div class="input-with-toggle">
+          <input type="text" id="custom-skills" placeholder="예: JavaScript, Python, SQL">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-skills" checked>
+          </label>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button id="cancel-profile" class="cancel-btn">취소</button>
+        <button id="save-profile" class="save-btn">저장</button>
+      </div>
     </div>
   </div>
   
@@ -227,6 +704,40 @@
     </div>
   </div>
   
+  <div id="profile-info" class="section hidden">
+    <h2>프로필 정보</h2>
+    
+    <div class="profile-section">
+      <div class="section-title">기본 정보</div>
+      <div id="basic-info"></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="section-title">학력</div>
+      <div id="education-info"></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="section-title">경력</div>
+      <div id="experience-info"></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="section-title">프로젝트</div>
+      <div id="project-info"></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="section-title">자격증</div>
+      <div id="certification-info"></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="section-title">보유기술</div>
+      <div id="skills-info"></div>
+    </div>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html> 
